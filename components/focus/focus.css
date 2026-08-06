@@ -1,0 +1,92 @@
+.focus-card .card__body {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+}
+
+.focus-card .segmented-toggle {
+  flex: 0 0 auto;
+}
+
+.timer-stage {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 4px 12px;
+}
+
+.timer-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.timer-readout strong {
+  color: var(--text);
+  font-size: clamp(42px, 4vw, 56px);
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+  letter-spacing: -0.065em;
+}
+
+.timer-readout span {
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+}
+
+.timer-progress {
+  width: min(82%, 230px);
+  height: 3px;
+  overflow: hidden;
+  background: var(--surface-active);
+  border-radius: 999px;
+}
+
+.timer-progress span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: inherit;
+}
+
+.timer-progress.stopwatch span {
+  opacity: 0.72;
+}
+
+.timer-actions {
+  display: grid;
+  width: 100%;
+  flex: 0 0 auto;
+  grid-template-columns: 36px minmax(116px, 1fr) 36px;
+  align-items: center;
+  gap: 9px;
+}
+
+.timer-primary {
+  width: 100%;
+  min-height: 40px;
+}
+
+.timer-spacer {
+  width: 36px;
+}
+
+@media (max-height: 760px) {
+  .timer-stage {
+    gap: 16px;
+    padding: 5px 10px;
+  }
+
+  .timer-readout strong {
+    font-size: 44px;
+  }
+}

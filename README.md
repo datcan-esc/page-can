@@ -29,6 +29,27 @@
 
 Harici font, state kütüphanesi, grafik kütüphanesi veya uzaktan çalışan kod kullanılmaz.
 
+## Arayüz mimarisi
+
+Arayüz iki katmana ayrılır:
+
+- `components/ui`: davranış ve görsel sözleşmesi ortak olan temel bileşenler
+- `components/<feature>`: favoriler, yer imleri, odak, istatistikler ve yapılacaklar gibi alan bileşenleri
+- `styles`: yalnızca tema değişkenleri, reset ve sayfa yerleşimi
+
+Temel bileşen kuralları:
+
+- `Button`: yalnızca `default`, `ghost` ve `outlined` varyantlarını kullanır.
+- `IconButton`: yalnızca `ghost` ve `outlined` varyantlarını kullanır. Kart içi aksiyonlar `ghost`, bağımsız aksiyonlar `outlined` olur.
+- `Card`: padding, başlık, sağ üst aksiyon ve footer ritmini tek noktadan yönetir; favoriler ve saat alanı da aynı yüzey sistemini kullanır.
+- `Dialog`: başlık ile subtitle'ı dikey ayraçla aynı satırda, kapatma ve varsa `Vazgeç / Kaydet` eylemlerini ortak düzende gösterir.
+- `Input`: metin, URL, sayı, arama ve çok satırlı girişlerin ikon, placeholder, focus ve trailing aksiyon davranışını yönetir.
+- `ShortcutField`: kısayol kaydetme, gösterme, açıklama ve `Kaldır` eylemini standartlaştırır.
+- `List` ve `ListItem`: yer imi ve yapılacak satırlarının hizasını ve sağ aksiyon alanını paylaşır.
+- `SegmentedToggle`: az sayıda birbirini dışlayan görünüm veya mod seçeneği için kullanılır.
+
+Her temel bileşen kendi klasöründeki CSS dosyasından, her alan bileşeni ise kendi feature CSS dosyasından sorumludur. `entrypoints/newtab/style.css` sadece global stil katmanlarını içe aktarır; component seçicileri burada tutulmaz.
+
 ## Geliştirme
 
 Gereksinim: Node.js 20 veya üzeri.

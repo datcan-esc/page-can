@@ -1,0 +1,60 @@
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field-group,
+.color-field,
+.range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-group > span,
+.color-field > span:first-child,
+.range-field > span {
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+}
+
+.field-group select {
+  width: 100%;
+  height: 42px;
+  min-width: 0;
+  padding: 0 12px;
+  color: var(--text);
+  font-size: var(--type-title);
+  background: var(--surface-soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  outline: none;
+}
+
+.field-group select:focus {
+  border-color: color-mix(in srgb, var(--primary) 58%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.form-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1.35;
+}
+
+.modal-empty,
+.card-empty {
+  display: flex;
+  min-height: 80px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  text-align: center;
+}

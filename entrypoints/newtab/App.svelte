@@ -1,20 +1,20 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { browser } from 'wxt/browser';
-  import AllBookmarksModal from '../../components/AllBookmarksModal.svelte';
-  import AllTodosModal from '../../components/AllTodosModal.svelte';
-  import BookmarkCard from '../../components/BookmarkCard.svelte';
-  import ClockCard from '../../components/ClockCard.svelte';
-  import FavoriteDialog from '../../components/FavoriteDialog.svelte';
-  import FavoriteGrid from '../../components/FavoriteGrid.svelte';
-  import Icon from '../../components/Icon.svelte';
-  import IconButton from '../../components/IconButton.svelte';
-  import PomodoroCard from '../../components/PomodoroCard.svelte';
-  import PomodoroSettingsDialog from '../../components/PomodoroSettingsDialog.svelte';
-  import SettingsModal from '../../components/SettingsModal.svelte';
-  import StatsCard from '../../components/StatsCard.svelte';
-  import StatsDetailDialog from '../../components/StatsDetailDialog.svelte';
-  import TodoCard from '../../components/TodoCard.svelte';
+  import BookmarkCard from '../../components/bookmarks/BookmarkCard.svelte';
+  import BookmarksDialog from '../../components/bookmarks/BookmarksDialog.svelte';
+  import FavoriteDialog from '../../components/favorites/FavoriteDialog.svelte';
+  import FavoriteGrid from '../../components/favorites/FavoriteGrid.svelte';
+  import FocusCard from '../../components/focus/FocusCard.svelte';
+  import FocusSettingsDialog from '../../components/focus/FocusSettingsDialog.svelte';
+  import AppearanceDialog from '../../components/settings/AppearanceDialog.svelte';
+  import ClockCard from '../../components/shell/ClockCard.svelte';
+  import StatsCard from '../../components/stats/StatsCard.svelte';
+  import StatsDetailDialog from '../../components/stats/StatsDetailDialog.svelte';
+  import TodoCard from '../../components/todos/TodoCard.svelte';
+  import TodosDialog from '../../components/todos/TodosDialog.svelte';
+  import Icon from '../../components/ui/Icon.svelte';
+  import IconButton from '../../components/ui/IconButton.svelte';
   import { loadBookmarkData, removeBookmark } from '../../lib/bookmarks';
   import { durationForMode, requestCompletion, toggleTimer } from '../../lib/pomodoro';
   import {
@@ -303,7 +303,7 @@
       </div>
 
       <div class="dashboard-column dashboard-column--center">
-        <PomodoroCard
+        <FocusCard
           {timer}
           {settings}
           onTimerChange={(next) => (timer = next)}
@@ -328,7 +328,7 @@
 {/if}
 
 {#if activeDialog === 'appearance'}
-  <SettingsModal
+  <AppearanceDialog
     {settings}
     {hasWallpaper}
     onClose={() => (activeDialog = null)}
@@ -350,7 +350,7 @@
 {/if}
 
 {#if activeDialog === 'bookmarks'}
-  <AllBookmarksModal
+  <BookmarksDialog
     bookmarks={allBookmarks}
     onClose={() => (activeDialog = null)}
     onRemove={(bookmark) => void deleteBookmark(bookmark)}
@@ -358,7 +358,7 @@
 {/if}
 
 {#if activeDialog === 'todos'}
-  <AllTodosModal
+  <TodosDialog
     {todos}
     onClose={() => (activeDialog = null)}
     onChange={updateTodos}
@@ -366,7 +366,7 @@
 {/if}
 
 {#if activeDialog === 'pomodoro'}
-  <PomodoroSettingsDialog
+  <FocusSettingsDialog
     preferences={settings.pomodoro}
     favoriteShortcuts={favorites.map((favorite) => favorite.shortcut).filter(Boolean)}
     onClose={() => (activeDialog = null)}

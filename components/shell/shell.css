@@ -1,0 +1,66 @@
+.settings-button {
+  --text: var(--card-text);
+  --muted: var(--card-muted);
+  --surface-soft: var(--card-surface-soft);
+  --surface-hover: var(--card-surface-hover);
+  --surface-active: var(--card-surface-active);
+  --separator: var(--card-separator);
+  color: var(--text);
+  background: rgb(var(--card-rgb) / var(--card-opacity));
+  border: 1px solid var(--card-border);
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 3%),
+    0 6px 18px rgb(0 0 0 / 10%);
+}
+
+.clock-card.card {
+  height: 44px;
+  min-width: 0;
+  padding: 0 14px;
+  border-radius: 14px;
+}
+
+.clock-card .card__body {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto 1px auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.clock-card__time {
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.clock-card__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--separator);
+}
+
+.clock-card__date {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 540;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-transform: capitalize;
+}
+
+.settings-button.icon-button {
+  width: 38px;
+  height: 38px;
+  color: var(--muted);
+  border-radius: var(--radius-control);
+}
+
+.settings-button.icon-button:hover:not(:disabled) {
+  color: var(--text);
+  background: rgb(var(--card-rgb) / var(--card-opacity));
+  border-color: color-mix(in srgb, var(--text) 14%, transparent);
+}

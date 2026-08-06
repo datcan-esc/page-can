@@ -1,0 +1,56 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+
+  --type-title: 13px;
+  --type-body: 11px;
+  --weight-title: 650;
+  --weight-body: 450;
+
+  --text: #f5f5f7;
+  --muted: #aaaab1;
+  --primary: #5e5ce6;
+  --primary-contrast: #ffffff;
+  --secondary: #8e8e93;
+  --danger: #ff6961;
+  --page-bg: #0a0a0b;
+
+  --card-rgb: 23 23 25;
+  --card-text: #f5f5f7;
+  --card-muted: #b6b6bd;
+  --card-surface-soft: rgb(255 255 255 / 6%);
+  --card-surface-hover: rgb(255 255 255 / 10%);
+  --card-surface-active: rgb(255 255 255 / 14%);
+  --card-separator: rgb(255 255 255 / 9%);
+  --card-opacity: 0.92;
+  --card-blur: 20px;
+  --card-border: rgb(255 255 255 / 8%);
+
+  --surface-soft: rgb(255 255 255 / 5%);
+  --surface-hover: rgb(255 255 255 / 8%);
+  --surface-active: rgb(255 255 255 / 11%);
+  --separator: rgb(255 255 255 / 7%);
+
+  --wallpaper-dim: 0.28;
+  --wallpaper-blur: 0px;
+  --wallpaper-position: 50% 50%;
+
+  --radius-control: 10px;
+  --radius-card: 18px;
+  --control-height: 38px;
+  --card-gap: 18px;
+  --card-padding: 18px;
+  --ease-out: cubic-bezier(0.2, 0.75, 0.25, 1);
+  --transition-fast: 140ms var(--ease-out);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --text: #1c1c1e;
+  --muted: #5c5c63;
+  --page-bg: #f2f2f7;
+  --surface-soft: rgb(28 28 30 / 5%);
+  --surface-hover: rgb(28 28 30 / 8%);
+  --surface-active: rgb(28 28 30 / 11%);
+  --separator: rgb(28 28 30 / 8%);
+}

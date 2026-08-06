@@ -1,0 +1,125 @@
+.wallpaper,
+.wallpaper-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wallpaper {
+  z-index: 0;
+  background-position: var(--wallpaper-position);
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(var(--wallpaper-blur));
+  opacity: 0;
+  transform: scale(1.025);
+}
+
+.wallpaper.has-image {
+  opacity: 1;
+}
+
+.wallpaper-overlay {
+  z-index: 1;
+}
+
+.wallpaper-overlay.has-image {
+  background: rgb(0 0 0 / var(--wallpaper-dim));
+}
+
+:root[data-theme="light"] .wallpaper-overlay.has-image {
+  background: rgb(255 255 255 / calc(var(--wallpaper-dim) * 0.42));
+}
+
+.page-shell {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: min(1320px, calc(100vw - 96px));
+  height: min(820px, calc(100dvh - 72px));
+  grid-template-rows: 44px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-grid {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1.06fr) minmax(270px, 0.86fr) minmax(0, 1.14fr);
+  gap: var(--card-gap);
+}
+
+.dashboard-column {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  gap: var(--card-gap);
+}
+
+.dashboard-column--left,
+.dashboard-column--center {
+  grid-template-rows: minmax(0, 1.08fr) minmax(0, 0.92fr);
+}
+
+.dashboard-column--right {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.app-loading {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  height: 100dvh;
+  place-items: center;
+}
+
+.brand-mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  color: var(--primary-contrast);
+  font-size: var(--type-title);
+  font-weight: var(--weight-title);
+  background: var(--primary);
+  border-radius: 14px;
+}
+
+@media (max-height: 760px) {
+  :root {
+    --card-gap: 14px;
+    --card-padding: 16px;
+  }
+
+  .page-shell {
+    width: min(1320px, calc(100vw - 72px));
+    height: calc(100dvh - 48px);
+    grid-template-rows: 38px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .dashboard-column--left,
+  .dashboard-column--center {
+    grid-template-rows: minmax(330px, 1.08fr) minmax(0, 0.92fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --card-gap: 14px;
+    --card-padding: 16px;
+  }
+
+  .page-shell {
+    width: calc(100vw - 56px);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(255px, 0.84fr) minmax(0, 1.08fr);
+  }
+}

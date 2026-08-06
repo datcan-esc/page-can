@@ -1,0 +1,100 @@
+.dialog-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: rgb(0 0 0 / 58%);
+  backdrop-filter: blur(10px);
+}
+
+.dialog-panel {
+  --text: var(--card-text);
+  --muted: var(--card-muted);
+  --surface-soft: var(--card-surface-soft);
+  --surface-hover: var(--card-surface-hover);
+  --surface-active: var(--card-surface-active);
+  --separator: var(--card-separator);
+  display: flex;
+  width: min(520px, 100%);
+  max-height: min(720px, calc(100dvh - 64px));
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--text);
+  background: color-mix(in srgb, rgb(var(--card-rgb)) 97%, var(--page-bg));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 3%),
+    0 32px 110px rgb(0 0 0 / 42%);
+}
+
+.dialog-panel.wide {
+  width: min(860px, 100%);
+}
+
+.dialog-header,
+.dialog-footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+}
+
+.dialog-header {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--separator);
+}
+
+.dialog-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.dialog-header h2 {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-title);
+  font-weight: var(--weight-title);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+}
+
+.dialog-header p {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dialog-heading__divider {
+  width: 1px;
+  height: 18px;
+  flex: 0 0 1px;
+  background: var(--separator);
+}
+
+.dialog-content {
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+}
+
+.dialog-footer {
+  border-top: 1px solid var(--separator);
+}
+
+.dialog-footer__spacer {
+  flex: 1;
+}

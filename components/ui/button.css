@@ -1,0 +1,64 @@
+.button {
+  display: inline-flex;
+  min-height: var(--control-height);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  font-size: var(--type-body);
+  font-weight: var(--weight-title);
+  line-height: 1;
+  appearance: none;
+  user-select: none;
+}
+
+.button--sm {
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.button--default {
+  color: var(--primary-contrast);
+  background: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 82%, white 18%);
+  box-shadow: inset 0 1px rgb(255 255 255 / 10%);
+}
+
+.button--default:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.button--outlined {
+  color: var(--text);
+  background: var(--surface-soft);
+  border-color: var(--separator);
+}
+
+.button--outlined:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: color-mix(in srgb, var(--text) 15%, transparent);
+}
+
+.button--ghost {
+  color: var(--muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.button--ghost:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.button:active:not(:disabled) {
+  filter: brightness(0.93);
+}
+
+.button > svg {
+  flex: 0 0 auto;
+}

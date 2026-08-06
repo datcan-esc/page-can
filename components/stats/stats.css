@@ -1,0 +1,253 @@
+.stats-card .card__body {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.stat-summary,
+.detail-stat-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stat-summary > div,
+.detail-stat-summary > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 2px 12px 4px 0;
+}
+
+.stat-summary > div + div,
+.detail-stat-summary > div + div {
+  padding-left: 13px;
+  border-left: 1px solid var(--separator);
+}
+
+.stat-summary strong,
+.detail-stat-summary strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-summary span,
+.detail-stat-summary span {
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+}
+
+.focus-chart {
+  display: grid;
+  min-height: 82px;
+  flex: 1;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.chart-scale {
+  position: relative;
+  margin-bottom: 19px;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: right;
+}
+
+.chart-scale span {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+}
+
+.chart-main {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: minmax(62px, 1fr) 14px;
+  gap: 5px;
+}
+
+.chart-plot {
+  position: relative;
+  min-height: 0;
+  border-bottom: 1px solid var(--separator);
+}
+
+.chart-grid,
+.chart-bars {
+  position: absolute;
+  inset: 0;
+}
+
+.chart-grid {
+  pointer-events: none;
+}
+
+.chart-grid span {
+  position: absolute;
+  right: 0;
+  left: 0;
+  border-top: 1px solid var(--separator);
+  transform: translateY(50%);
+}
+
+.chart-bars,
+.chart-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.chart-bars {
+  z-index: 2;
+}
+
+.chart-bar {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.chart-bar > span {
+  width: 100%;
+  min-height: 2px;
+  background: color-mix(in srgb, var(--primary) 48%, var(--muted));
+  border-radius: 4px 4px 2px 2px;
+}
+
+.chart-bar.today > span {
+  background: var(--primary);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.chart-bar.future,
+.chart-days .future {
+  opacity: 0.32;
+}
+
+.chart-days small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-days small.today {
+  color: var(--text);
+  font-weight: var(--weight-title);
+}
+
+.detail-stat-summary {
+  margin-bottom: 18px;
+}
+
+.detail-stat-summary strong {
+  font-size: 22px;
+}
+
+.month-calendar {
+  display: grid;
+  gap: 8px;
+}
+
+.month-calendar__weekdays,
+.month-calendar__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.month-calendar__weekdays span {
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  text-align: center;
+}
+
+.month-day {
+  display: grid;
+  min-width: 0;
+  height: 56px;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  padding: 8px 9px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--primary) var(--day-strength), var(--surface-soft));
+  border: 1px solid color-mix(in srgb, var(--primary) var(--day-strength), var(--separator));
+  border-radius: 10px;
+}
+
+.month-day time {
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1;
+}
+
+.month-day strong {
+  align-self: end;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  text-overflow: ellipsis;
+}
+
+.month-day.empty strong {
+  color: var(--muted);
+  font-weight: var(--weight-body);
+}
+
+.month-day.today {
+  border-color: color-mix(in srgb, var(--primary) 80%, white 20%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+.month-day.today time {
+  color: var(--text);
+  font-weight: var(--weight-title);
+}
+
+.month-day.outside {
+  color: var(--muted);
+  background: transparent;
+  border-color: transparent;
+  opacity: 0.3;
+}
+
+.month-calendar__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.month-calendar__legend i {
+  width: 72px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--surface-soft), color-mix(in srgb, var(--primary) 68%, var(--surface-soft)));
+  border-radius: 999px;
+}
