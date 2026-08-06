@@ -32,8 +32,8 @@
 
 .input-control:focus-within {
   color: var(--text);
-  border-color: color-mix(in srgb, var(--primary) 58%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 11%, transparent);
 }
 
 .input-control__icon,
@@ -66,6 +66,13 @@
   background: transparent;
   border: 0;
   outline: 0;
+  box-shadow: none;
+}
+
+.input-control input:focus-visible,
+.input-control textarea:focus-visible {
+  outline: none;
+  outline-offset: 0;
   box-shadow: none;
 }
 
