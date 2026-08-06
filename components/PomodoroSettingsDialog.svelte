@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PomodoroPreferences } from '../lib/types';
   import BaseDialog from './BaseDialog.svelte';
+  import Button from './Button.svelte';
   import ShortcutInput from './ShortcutInput.svelte';
 
   export let preferences: PomodoroPreferences;
@@ -15,7 +16,7 @@
   async function submit() {
     error = '';
     if (draft.shortcut && favoriteShortcuts.includes(draft.shortcut)) {
-      error = 'Bu klavye kısayolu bir favoride kullanılıyor.';
+      error = 'Bu kısayol bir favoride kullanılıyor.';
       return;
     }
 
@@ -26,32 +27,26 @@
   }
 </script>
 
-<BaseDialog title="Pomodoro ayarları" {onClose}>
+<BaseDialog title="Odak ayarları" {onClose}>
   <form id="pomodoro-form" class="dialog-form" onsubmit={(event) => { event.preventDefault(); void submit(); }}>
-    <div class="number-grid">
-      <label><span>Odak</span><input type="number" min="1" max="120" bind:value={draft.focusMinutes} /><small>dk</small></label>
-      <label><span>Kısa mola</span><input type="number" min="1" max="60" bind:value={draft.shortBreakMinutes} /><small>dk</small></label>
-      <label><span>Uzun mola</span><input type="number" min="1" max="90" bind:value={draft.longBreakMinutes} /><small>dk</small></label>
-    </div>
-
-    <label class="toggle-row">
-      <span><b>Molaları otomatik başlat</b><small>Odak seansı bitince mola başlar.</small></span>
-      <input type="checkbox" bind:checked={draft.autoStartBreaks} />
-    </label>
-    <label class="toggle-row">
-      <span><b>Odağı otomatik başlat</b><small>Mola bitince yeni seans başlar.</small></span>
-      <input type="checkbox" bind:checked={draft.autoStartFocus} />
+    <label class="field-group focus-duration-field">
+      <span>Geri sayım süresi</span>
+      <span class="number-input-wrap">
+        <input type="number" min="1" max="240" bind:value={draft.focusMinutes} />
+        <small>dakika</small>
+      </span>
     </label>
 
     <ShortcutInput value={draft.shortcut} onChange={(value) => (draft.shortcut = value)} label="Başlat / duraklat" />
+    <p class="field-hint">Tek harf, Space veya tuş kombinasyonu kullanabilirsin.</p>
     {#if error}<p class="form-error">{error}</p>{/if}
   </form>
 
   <svelte:fragment slot="footer">
-    <button class="secondary-button" type="button" onclick={onClose}>Vazgeç</button>
+    <Button variant="secondary" onclick={onClose}>Vazgeç</Button>
     <span class="footer-spacer"></span>
-    <button class="primary-button" type="submit" form="pomodoro-form" disabled={saving}>
+    <Button variant="primary" type="submit" form="pomodoro-form" disabled={saving}>
       {saving ? 'Kaydediliyor…' : 'Kaydet'}
-    </button>
+    </Button>
   </svelte:fragment>
 </BaseDialog>

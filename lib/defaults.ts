@@ -3,11 +3,14 @@ import type { AppSettings, PomodoroState } from './types';
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: {
     mode: 'dark',
-    primaryColor: '#7c8cf8',
-    secondaryColor: '#a6b1ff',
-    cardColor: '#16171c',
-    cardOpacity: 0.82,
-    cardBlur: 16,
+    primaryColor: '#5e5ce6',
+    autoAccent: false,
+    showFavoriteNames: true,
+    secondaryColor: '#8e8e93',
+    pageBackgroundColor: '#0a0a0b',
+    cardColor: '#171719',
+    cardOpacity: 0.92,
+    cardBlur: 20,
     borderMode: 'auto',
     borderColor: '#ffffff',
     wallpaperDim: 0.28,
@@ -16,11 +19,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   pomodoro: {
     focusMinutes: 25,
-    shortBreakMinutes: 5,
-    longBreakMinutes: 15,
-    autoStartBreaks: false,
-    autoStartFocus: false,
-    shortcut: 'Alt+P',
+    shortcut: 'Space',
   },
 };
 
@@ -29,5 +28,5 @@ export const DEFAULT_TIMER: PomodoroState = {
   status: 'idle',
   durationSec: 25 * 60,
   remainingSec: 25 * 60,
-  focusCycle: 0,
+  elapsedSec: 0,
 };

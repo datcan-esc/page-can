@@ -48,9 +48,17 @@ export async function saveTodos(todos: Todo[]): Promise<void> {
 
 export async function loadTimer(): Promise<PomodoroState> {
   const result = await browser.storage.local.get(LOCAL_TIMER_KEY);
+  const stored = result[LOCAL_TIMER_KEY] as (Omit<Partial<PomodoroState>, 'mode'> & { mode?: string }) | undefined;
+  const mode = stored?.mode === 'stopwatch' ? 'stopwatch' : 'focus';
+  const legacyBreak = stored?.mode === 'shortBreak' || stored?.mode === 'longBreak';
+
+  if (legacyBreak) return { ...DEFAULT_TIMER };
+
   return {
     ...DEFAULT_TIMER,
-    ...(result[LOCAL_TIMER_KEY] as Partial<PomodoroState> | undefined),
+    ...stored,
+    mode,
+    elapsedSec: Math.max(0, stored?.elapsedSec ?? 0),
   };
 }
 

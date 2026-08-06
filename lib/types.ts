@@ -1,12 +1,15 @@
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type BorderMode = 'auto' | 'custom';
-export type PomodoroMode = 'focus' | 'shortBreak' | 'longBreak';
+export type PomodoroMode = 'focus' | 'stopwatch';
 export type TimerStatus = 'idle' | 'running' | 'paused';
 
 export interface ThemePreferences {
   mode: ThemeMode;
   primaryColor: string;
+  autoAccent: boolean;
+  showFavoriteNames: boolean;
   secondaryColor: string;
+  pageBackgroundColor: string;
   cardColor: string;
   cardOpacity: number;
   cardBlur: number;
@@ -19,10 +22,6 @@ export interface ThemePreferences {
 
 export interface PomodoroPreferences {
   focusMinutes: number;
-  shortBreakMinutes: number;
-  longBreakMinutes: number;
-  autoStartBreaks: boolean;
-  autoStartFocus: boolean;
   shortcut: string;
 }
 
@@ -52,10 +51,10 @@ export interface PomodoroState {
   status: TimerStatus;
   durationSec: number;
   remainingSec: number;
+  elapsedSec: number;
   startedAt?: number;
   endsAt?: number;
   sessionId?: string;
-  focusCycle: number;
 }
 
 export interface DailyStat {

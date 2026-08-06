@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { Favorite } from '../lib/types';
-  import { faviconUrl } from '../lib/utils';
-  import BaseCard from './BaseCard.svelte';
+  import Button from './Button.svelte';
+  import Favicon from './Favicon.svelte';
   import Icon from './Icon.svelte';
+  import IconButton from './IconButton.svelte';
 
   export let favorites: Favorite[] = [];
+  export let showNames = true;
   export let onAdd: () => void;
   export let onEdit: (favorite: Favorite) => void;
   export let onDelete: (favorite: Favorite) => void;
@@ -12,8 +14,6 @@
   let menuId = '';
 
   $: visibleFavorites = favorites.slice(0, 15);
-
-  const initials = (name: string) => name.trim().slice(0, 2).toLocaleUpperCase('tr-TR');
 
   function toggleMenu(event: MouseEvent, id: string) {
     event.preventDefault();
@@ -36,57 +36,56 @@
   }
 </script>
 
-<svelte:window onclick={() => (menuId = '')} />
+<svelte:window
+  onclick={() => (menuId = '')}
+  onkeydown={(event) => { if (event.key === 'Escape') menuId = ''; }}
+/>
 
-<BaseCard title="Favoriler" headingId="favorites-heading" class="favorites-card">
+<section class:show-names={showNames} class="favorites-panel" aria-labelledby="favorites-heading">
+  <h2 id="favorites-heading" class="visually-hidden">Favoriler</h2>
   <div class="favorite-grid">
     {#each visibleFavorites as favorite (favorite.id)}
-      <div class="favorite-entry">
-        <a class="favorite-item" href={favorite.url} aria-label={`${favorite.name} sitesini aç`}>
-          <span class="favorite-tile">
-            <span class="favorite-fallback">{initials(favorite.name)}</span>
-            <img
-              src={faviconUrl(favorite.url)}
-              alt=""
-              onerror={(event) => ((event.currentTarget as HTMLImageElement).style.display = 'none')}
-            />
-          </span>
-          <span class="favorite-name">{favorite.name}</span>
-        </a>
+        <div class="favorite-entry">
+          <a class="favorite-item" href={favorite.url} aria-label={`${favorite.name} sitesini aç`}>
+            <span class="favorite-tile">
+              <Favicon url={favorite.url} requestSize={64} iconSize={20} />
+            </span>
+            {#if showNames}<span class="favorite-name">{favorite.name}</span>{/if}
+          </a>
 
-        <button
-          class="favorite-menu-trigger"
-          class:active={menuId === favorite.id}
-          type="button"
-          aria-label={`${favorite.name} seçenekleri`}
-          aria-expanded={menuId === favorite.id}
-          onclick={(event) => toggleMenu(event, favorite.id)}
-        >
-          <Icon name="more" size={16} />
-        </button>
+          <IconButton
+            label={`${favorite.name} seçenekleri`}
+            class={menuId === favorite.id ? 'favorite-menu-trigger active' : 'favorite-menu-trigger'}
+            aria-expanded={menuId === favorite.id}
+            aria-haspopup="menu"
+            onclick={(event: MouseEvent) => toggleMenu(event, favorite.id)}
+          >
+            <Icon name="more" size={15} />
+          </IconButton>
 
-        {#if menuId === favorite.id}
-          <div class="context-menu" role="group" aria-label={`${favorite.name} yönetimi`}>
-            <button type="button" role="menuitem" onclick={(event) => edit(event, favorite)}>
-              <Icon name="edit" size={14} /> Düzenle
-            </button>
-            <button class="danger" type="button" role="menuitem" onclick={(event) => remove(event, favorite)}>
-              <Icon name="trash" size={14} /> Sil
-            </button>
-          </div>
-        {/if}
-      </div>
-    {/each}
+          {#if menuId === favorite.id}
+            <div class="context-menu" role="menu" aria-label={`${favorite.name} yönetimi`}>
+              <Button variant="unstyled" role="menuitem" onclick={(event: MouseEvent) => edit(event, favorite)}>
+                <Icon name="edit" size={14} /> Düzenle
+              </Button>
+              <Button variant="unstyled" role="menuitem" onclick={(event: MouseEvent) => remove(event, favorite)}>
+                <Icon name="close" size={14} /> Sil
+              </Button>
+            </div>
+          {/if}
+        </div>
+      {/each}
 
-    <button
+    <Button
+      variant="unstyled"
       class="favorite-item favorite-add"
-      type="button"
       onclick={onAdd}
       disabled={favorites.length >= 15}
-      title={favorites.length >= 15 ? 'En fazla 15 favori eklenebilir' : 'Favori ekle'}
+      aria-label="Favori ekle"
+      title={favorites.length >= 15 ? 'Favori sınırına ulaştın' : 'Favori ekle'}
     >
       <span class="favorite-tile"><Icon name="plus" size={22} /></span>
-      <span class="favorite-name">Ekle</span>
-    </button>
+      {#if showNames}<span class="favorite-name">Ekle</span>{/if}
+    </Button>
   </div>
-</BaseCard>
+</section>

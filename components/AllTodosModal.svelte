@@ -1,46 +1,86 @@
 <script lang="ts">
   import type { Todo } from '../lib/types';
-  import Icon from './Icon.svelte';
+  import { createId } from '../lib/utils';
   import BaseDialog from './BaseDialog.svelte';
+  import Icon from './Icon.svelte';
+  import TodoComposer from './TodoComposer.svelte';
   import TodoRows from './TodoRows.svelte';
 
   export let todos: Todo[];
   export let onClose: () => void;
   export let onChange: (todos: Todo[]) => void;
 
-  let tab: 'active' | 'completed' = 'active';
   let query = '';
 
   $: normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
-  $: filtered = todos
-    .filter((todo) => tab === 'completed' ? todo.completed : !todo.completed)
-    .filter((todo) => todo.title.toLocaleLowerCase('tr-TR').includes(normalizedQuery))
-    .sort((left, right) => tab === 'completed'
-      ? (right.completedAt ?? 0) - (left.completedAt ?? 0)
-      : right.createdAt - left.createdAt);
+  $: active = todos
+    .filter((todo) => !todo.completed)
+    .filter(matchesQuery)
+    .sort((left, right) => right.createdAt - left.createdAt);
+  $: completed = todos
+    .filter((todo) => todo.completed)
+    .filter(matchesQuery)
+    .sort((left, right) => (right.completedAt ?? 0) - (left.completedAt ?? 0));
+  $: activeCount = todos.filter((todo) => !todo.completed).length;
+  $: completedCount = todos.length - activeCount;
 
-  function updateFiltered(updated: Todo[]) {
-    const visibleIds = new Set(filtered.map((todo) => todo.id));
+  function matchesQuery(todo: Todo) {
+    return todo.title.toLocaleLowerCase('tr-TR').includes(normalizedQuery);
+  }
+
+  function addTodo(title: string) {
     onChange([
-      ...todos.filter((todo) => !visibleIds.has(todo.id)),
+      ...todos,
+      { id: createId('todo'), title, completed: false, createdAt: Date.now() },
+    ]);
+  }
+
+  function updateSubset(original: Todo[], updated: Todo[]) {
+    const originalIds = new Set(original.map((todo) => todo.id));
+    onChange([
+      ...todos.filter((todo) => !originalIds.has(todo.id)),
       ...updated,
     ]);
   }
 </script>
 
-<BaseDialog title="Tüm yapılacaklar" subtitle={`${todos.length} kayıt`} {onClose} wide>
-  <div class="modal-toolbar">
-    <div class="segmented-control">
-      <button class:active={tab === 'active'} type="button" onclick={() => (tab = 'active')}>Yapılacaklar</button>
-      <button class:active={tab === 'completed'} type="button" onclick={() => (tab = 'completed')}>Tamamlananlar</button>
-    </div>
+<BaseDialog
+  title="Yapılacaklar"
+  subtitle={`${activeCount} açık · ${completedCount} tamamlanan`}
+  {onClose}
+  wide
+>
+  <div class="todos-modal-toolbar">
+    <TodoComposer onAdd={addTodo} />
     <div class="search-field compact-search">
-      <Icon name="search" size={17} />
-      <input bind:value={query} placeholder="Ara" aria-label="Yapılacaklarda ara" />
+      <Icon name="search" size={16} />
+      <input bind:value={query} placeholder="Görevlerde ara" aria-label="Yapılacaklarda ara" />
     </div>
   </div>
 
-  <div class="expanded-todos">
-    <TodoRows todos={filtered} onChange={updateFiltered} />
+  <div class="todo-sections">
+    <section class="todo-section" aria-labelledby="active-todos-heading">
+      <header>
+        <strong id="active-todos-heading">Yapılacaklar</strong>
+        <span>{active.length}</span>
+      </header>
+      <TodoRows
+        todos={active}
+        onChange={(updated) => updateSubset(active, updated)}
+        emptyText={normalizedQuery ? 'Aramana uygun açık görev yok.' : 'Açık görev yok.'}
+      />
+    </section>
+
+    <section class="todo-section" aria-labelledby="completed-todos-heading">
+      <header>
+        <strong id="completed-todos-heading">Tamamlananlar</strong>
+        <span>{completed.length}</span>
+      </header>
+      <TodoRows
+        todos={completed}
+        onChange={(updated) => updateSubset(completed, updated)}
+        emptyText={normalizedQuery ? 'Aramana uygun tamamlanan görev yok.' : 'Henüz tamamlanan görev yok.'}
+      />
+    </section>
   </div>
 </BaseDialog>

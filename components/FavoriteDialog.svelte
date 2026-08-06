@@ -2,6 +2,7 @@
   import type { Favorite } from '../lib/types';
   import { createId, normalizeUrl } from '../lib/utils';
   import BaseDialog from './BaseDialog.svelte';
+  import Button from './Button.svelte';
   import Icon from './Icon.svelte';
   import ShortcutInput from './ShortcutInput.svelte';
 
@@ -67,11 +68,11 @@
   </form>
 
   <svelte:fragment slot="footer">
-    <button class="secondary-button" type="button" onclick={onClose}>Vazgeç</button>
+    <Button variant="secondary" onclick={onClose}>Vazgeç</Button>
     <span class="footer-spacer"></span>
-    <button class="primary-button" type="submit" form="favorite-form" disabled={saving}>
+    <Button variant="primary" type="submit" form="favorite-form" disabled={saving}>
       <Icon name={favorite ? 'check' : 'plus'} size={16} />
       {saving ? 'Kaydediliyor…' : favorite ? 'Kaydet' : 'Ekle'}
-    </button>
+    </Button>
   </svelte:fragment>
 </BaseDialog>

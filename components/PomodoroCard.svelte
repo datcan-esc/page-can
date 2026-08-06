@@ -2,41 +2,46 @@
   import { onMount } from 'svelte';
   import type { AppSettings, PomodoroMode, PomodoroState } from '../lib/types';
   import {
+    elapsedSeconds,
+    remainingSeconds,
     requestCompletion,
     resetTimer,
-    remainingSeconds,
     selectMode,
     toggleTimer,
   } from '../lib/pomodoro';
   import { formatDuration } from '../lib/utils';
   import BaseCard from './BaseCard.svelte';
+  import Button from './Button.svelte';
   import Icon from './Icon.svelte';
+  import IconButton from './IconButton.svelte';
 
   export let timer: PomodoroState;
   export let settings: AppSettings;
   export let onTimerChange: (timer: PomodoroState) => void;
   export let onOpenSettings: () => void;
 
-  let displayRemaining = remainingSeconds(timer);
+  let displayValue = timer.mode === 'focus' ? remainingSeconds(timer) : elapsedSeconds(timer);
   let completionRequestedFor = '';
 
-  const modes: { value: PomodoroMode; label: string }[] = [
-    { value: 'focus', label: 'Odak' },
-    { value: 'shortBreak', label: 'Kısa mola' },
-    { value: 'longBreak', label: 'Uzun mola' },
-  ];
-
-  $: if (timer.status !== 'running') displayRemaining = timer.remainingSec;
-  $: progress = timer.durationSec > 0
-    ? Math.min(1, Math.max(0, 1 - displayRemaining / timer.durationSec))
-    : 0;
+  $: if (timer.status !== 'running') {
+    displayValue = timer.mode === 'focus' ? timer.remainingSec : timer.elapsedSec;
+  }
+  $: progress = timer.mode === 'focus' && timer.durationSec > 0
+    ? Math.min(1, Math.max(0, 1 - displayValue / timer.durationSec))
+    : timer.status === 'idle' ? 0 : 1;
+  $: currentModeLabel = timer.mode === 'focus' ? 'Geri sayım' : 'Sayaç';
+  $: statusLabel = timer.status === 'running'
+    ? timer.mode === 'focus' ? 'Odak sürüyor' : 'Süre kaydediliyor'
+    : timer.status === 'paused' ? 'Duraklatıldı' : 'Hazır';
+  $: canReset = timer.status !== 'idle' || (timer.mode === 'stopwatch' && timer.elapsedSec > 0);
 
   onMount(() => {
     const tick = () => {
       if (timer.status !== 'running') return;
-      displayRemaining = remainingSeconds(timer);
+      displayValue = timer.mode === 'focus' ? remainingSeconds(timer) : elapsedSeconds(timer);
       if (
-        displayRemaining === 0 &&
+        timer.mode === 'focus' &&
+        displayValue === 0 &&
         timer.sessionId &&
         completionRequestedFor !== timer.sessionId
       ) {
@@ -71,38 +76,60 @@
   }
 </script>
 
-<BaseCard title="Pomodoro" headingId="pomodoro-heading" class="pomodoro-card">
+<BaseCard title="Odak" headingId="pomodoro-heading" class="pomodoro-card">
   <svelte:fragment slot="action">
-    <button class="icon-button subtle" type="button" aria-label="Pomodoro ayarları" onclick={onOpenSettings}>
-      <Icon name="settings" size={17} />
-    </button>
+    <IconButton label="Odak ayarları" onclick={onOpenSettings}>
+      <Icon name="settings" size={16} />
+    </IconButton>
   </svelte:fragment>
 
-  <div class="segmented-control timer-modes" aria-label="Pomodoro modu">
-    {#each modes as mode}
-      <button
-        class:active={timer.mode === mode.value}
-        type="button"
-        onclick={() => handleMode(mode.value)}
-      >{mode.label}</button>
-    {/each}
+  <div class="focus-mode-picker" aria-label="Odak modu">
+    <Button
+      variant="unstyled"
+      size="sm"
+      class={timer.mode === 'focus' ? 'active' : ''}
+      aria-pressed={timer.mode === 'focus'}
+      onclick={() => handleMode('focus')}
+    >{settings.pomodoro.focusMinutes} dk</Button>
+    <Button
+      variant="unstyled"
+      size="sm"
+      class={timer.mode === 'stopwatch' ? 'active' : ''}
+      aria-pressed={timer.mode === 'stopwatch'}
+      onclick={() => handleMode('stopwatch')}
+    >Sayaç</Button>
   </div>
 
-  <div class="timer-shell" style={`--progress-angle: ${progress * 360}deg`}>
-    <div class="timer-inner">
-      <strong>{formatDuration(displayRemaining)}</strong>
-      <span>{timer.status === 'running' ? 'Devam ediyor' : timer.status === 'paused' ? 'Duraklatıldı' : 'Hazır'}</span>
+  <div class="timer-stage">
+    <div
+      class="timer-readout"
+      role="timer"
+      aria-label={`${currentModeLabel}: ${formatDuration(displayValue)}`}
+    >
+      <strong>{formatDuration(displayValue)}</strong>
+      <span>{statusLabel}</span>
+    </div>
+    <div
+      class:stopwatch={timer.mode === 'stopwatch'}
+      class="timer-progress"
+      role="progressbar"
+      aria-label="Odak ilerlemesi"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow={Math.round(progress * 100)}
+    >
+      <span style={`width: ${progress * 100}%`}></span>
     </div>
   </div>
 
   <div class="timer-actions">
-    <button class="icon-button timer-reset" type="button" aria-label="Sıfırla" onclick={handleReset}>
-      <Icon name="reset" size={19} />
-    </button>
-    <button class="timer-primary" type="button" onclick={handleToggle}>
-      <Icon name={timer.status === 'running' ? 'pause' : 'play'} size={21} />
+    <IconButton label="Sıfırla" variant="secondary" disabled={!canReset} onclick={handleReset}>
+      <Icon name="reset" size={16} />
+    </IconButton>
+    <Button variant="primary" class="timer-primary" onclick={handleToggle}>
+      <Icon name={timer.status === 'running' ? 'pause' : 'play'} size={17} />
       {timer.status === 'running' ? 'Duraklat' : timer.status === 'paused' ? 'Devam et' : 'Başlat'}
-    </button>
+    </Button>
     <span class="timer-spacer" aria-hidden="true"></span>
   </div>
 </BaseCard>

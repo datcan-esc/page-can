@@ -4,7 +4,7 @@ export default defineConfig({
   modules: ['@wxt-dev/module-svelte'],
   manifest: {
     name: 'page-can',
-    description: 'Favoriler, yer imleri, pomodoro ve yapılacaklar için sade yeni sekme deneyimi.',
+    description: 'Favoriler, yer imleri, odak takibi ve yapılacaklar için sade yeni sekme deneyimi.',
     version: '0.1.0',
     permissions: ['storage', 'bookmarks', 'alarms', 'notifications', 'favicon'],
     icons: {

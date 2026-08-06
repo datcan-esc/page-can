@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { shortcutFromEvent } from '../lib/utils';
+  import { formatShortcut, shortcutFromEvent } from '../lib/utils';
+  import Button from './Button.svelte';
   import Icon from './Icon.svelte';
+  import IconButton from './IconButton.svelte';
 
   export let value = '';
   export let onChange: (shortcut: string) => void;
@@ -32,15 +34,22 @@
 
 <div class="shortcut-control">
   <span>{label}</span>
-  <button
-    class:recording
-    class="shortcut-recorder"
-    type="button"
-    onkeydown={capture}
-    onclick={() => (recording = true)}
-    onblur={() => (recording = false)}
-  >
-    <Icon name="keyboard" size={17} />
-    {recording ? 'Tuşlara basın…' : value || 'Atanmamış'}
-  </button>
+  <div class="shortcut-control-actions">
+    <Button
+      variant="secondary"
+      size="sm"
+      class={recording ? 'shortcut-recorder recording' : 'shortcut-recorder'}
+      onkeydown={capture}
+      onclick={() => (recording = true)}
+      onblur={() => (recording = false)}
+    >
+      <Icon name="keyboard" size={16} />
+      {recording ? 'Tuşa basın…' : value ? formatShortcut(value) : 'Atanmamış'}
+    </Button>
+    {#if value}
+      <IconButton label="Kısayolu kaldır" variant="ghost" onclick={() => onChange('')}>
+        <Icon name="close" size={15} />
+      </IconButton>
+    {/if}
+  </div>
 </div>

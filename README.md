@@ -4,17 +4,17 @@
 
 ## Özellikler
 
-- İsim, favicon ve kullanıcı tanımlı klavye kısayolu içeren favori site kartları
-- Son üç yer imini gösteren kompakt liste ve aranabilir tam yer imi görünümü
-- Odak, kısa mola ve uzun mola modlarına sahip timestamp tabanlı pomodoro
-- Tarayıcı kapansa veya yeni sekme kapanmış olsa da çalışan alarm/bildirim sistemi
-- Son 7 ve 30 güne ait SVG/CSS tabanlı odak istatistikleri
+- İsteğe bağlı isim, favicon ve kullanıcı tanımlı klavye kısayolu içeren favori site kartları
+- Son beş yer imini sabit satır ritminde gösteren liste ve aranabilir tam yer imi görünümü
+- Ayarlanabilir geri sayım ve sınırsız sayaç modlarına sahip odak zamanlayıcısı
+- Tarayıcı kapansa veya yeni sekme kapanmış olsa da geri sayımı sürdüren alarm/bildirim sistemi
+- Haftanın en yüksek gününe göre saat çizgileri üreten, gerçek geçen süreyi kaydeden haftalık ve aylık odak istatistikleri
 - Yapılacaklar ve tamamlananlar görünümleri, inline düzenleme ve tam liste ekranı
 - Açık, koyu ve sistem teması
-- Primary, secondary, kart ve isteğe bağlı border rengi
+- Vurgu, yüksek kontrastlı secondary metin, kart ve isteğe bağlı border rengi
 - Kart opaklığı ve blur ayarı
-- Yerel fotoğraf seçme, WebP optimizasyonu, karartma, blur ve konum ayarları
-- Responsive ve klavye erişilebilir arayüz
+- Yerel fotoğraf seçme, WebP optimizasyonu, otomatik vurgu rengi, karartma, blur ve konum ayarları
+- Masaüstü odaklı ve klavye erişilebilir arayüz
 
 ## Teknoloji
 
@@ -85,9 +85,9 @@ Wallpaper cihazdan dışarı gönderilmez. Seçilen fotoğraf en fazla 3840×216
 
 ## Klavye kısayolları
 
-Favori ve pomodoro kısayolları yeni sekme sayfası açık ve odaktayken çalışır. Dinamik sayıda favoriye izin vermek için Chromium'un manifestte önceden tanımlanan global `commands` sistemi kullanılmaz.
+Favori ve odak zamanlayıcısı kısayolları yeni sekme sayfası açık ve odaktayken çalışır. Yazı alanları, kontroller veya tarayıcının adres çubuğu odaktayken devreye girmez. Dinamik sayıda favoriye izin vermek için Chromium'un manifestte önceden tanımlanan global `commands` sistemi kullanılmaz.
 
-Kısayol kaydederken Alt, Ctrl, Shift veya Meta içeren bir kombinasyon kullanın. F1–F12 tuşları tek başına da kabul edilir. Aynı kombinasyon iki favoriye veya hem favoriye hem pomodoroya atanamaz.
+Tek harf, Space, F1–F12 veya Alt, Ctrl, Shift ve Meta içeren bir kombinasyon kullanılabilir. Aynı kısayol iki favoriye veya hem favoriye hem odak zamanlayıcısına atanamaz.
 
 ## İzinler
 

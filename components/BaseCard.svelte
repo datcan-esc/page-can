@@ -1,11 +1,12 @@
 <script lang="ts">
   export let title: string;
   export let headingId: string;
+  export let style = '';
   let className = '';
   export { className as class };
 </script>
 
-<section class={`base-card ${className}`} aria-labelledby={headingId}>
+<section class={`base-card ${className}`} {style} aria-labelledby={headingId}>
   <header class="base-card__header">
     <h2 id={headingId}>{title}</h2>
     {#if $$slots.action}

@@ -1,8 +1,11 @@
 <script lang="ts">
   import type { BookmarkItem } from '../lib/types';
-  import { faviconUrl, hostname } from '../lib/utils';
+  import { hostname } from '../lib/utils';
   import Icon from './Icon.svelte';
+  import Button from './Button.svelte';
   import BaseDialog from './BaseDialog.svelte';
+  import Favicon from './Favicon.svelte';
+  import IconButton from './IconButton.svelte';
 
   export let bookmarks: BookmarkItem[];
   export let onClose: () => void;
@@ -42,12 +45,7 @@
       <div class="list-row bookmark-row expanded">
         <a class="expanded-bookmark-link" href={bookmark.url}>
         <span class="row-icon">
-          <Icon name="bookmark" size={17} />
-          <img
-            src={faviconUrl(bookmark.url, 32)}
-            alt=""
-            onerror={(event) => ((event.currentTarget as HTMLImageElement).style.display = 'none')}
-          />
+          <Favicon url={bookmark.url} requestSize={32} iconSize={17} />
         </span>
         <span class="row-copy">
           <strong>{bookmark.title}</strong>
@@ -56,9 +54,9 @@
         <span class="row-domain">{hostname(bookmark.url)}</span>
         <Icon name="external" size={15} />
         </a>
-        <button class="icon-button subtle danger" type="button" aria-label={`${bookmark.title} yer imini sil`} onclick={() => onRemove(bookmark)}>
-          <Icon name="trash" size={15} />
-        </button>
+        <IconButton label={`${bookmark.title} yer imini sil`} onclick={() => onRemove(bookmark)}>
+          <Icon name="close" size={15} />
+        </IconButton>
       </div>
     {:else}
       <div class="modal-empty">Aramana uygun bir yer imi bulunamadı.</div>
@@ -66,8 +64,8 @@
   </div>
 
   {#if visibleCount < filtered.length}
-    <button class="load-more-button" type="button" onclick={() => (visibleCount += 100)}>
+    <Button variant="secondary" class="load-more-button" onclick={() => (visibleCount += 100)}>
       100 kayıt daha göster · {visibleCount}/{filtered.length}
-    </button>
+    </Button>
   {/if}
 </BaseDialog>

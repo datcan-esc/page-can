@@ -1,3 +1,5 @@
+import { browser } from 'wxt/browser';
+
 export function createId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
@@ -24,8 +26,13 @@ export function faviconUrl(url: string, size = 64): string {
 }
 
 export function formatDuration(totalSeconds: number): string {
-  const minutes = Math.floor(Math.max(0, totalSeconds) / 60);
-  const seconds = Math.max(0, totalSeconds) % 60;
+  const safeSeconds = Math.floor(Math.max(0, totalSeconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
@@ -47,9 +54,14 @@ export function shortcutFromEvent(event: KeyboardEvent): string | null {
     event.metaKey ? 'Meta' : '',
   ].filter(Boolean);
 
-  const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
+  const key = event.code === 'Space'
+    ? 'Space'
+    : event.key.length === 1
+      ? event.key.toLocaleUpperCase('tr-TR')
+      : event.key;
   const isFunctionKey = /^F([1-9]|1[0-2])$/.test(key);
-  if (modifiers.length === 0 && !isFunctionKey) return null;
+  const isDirectKey = /^[A-ZÇĞİÖŞÜ0-9]$/u.test(key) || key === 'Space';
+  if (modifiers.length === 0 && !isFunctionKey && !isDirectKey) return null;
 
   return [...modifiers, key].join('+');
 }
@@ -61,7 +73,14 @@ export function eventShortcut(event: KeyboardEvent): string {
     event.shiftKey ? 'Shift' : '',
     event.metaKey ? 'Meta' : '',
   ].filter(Boolean);
-  const key = event.key.length === 1 ? event.key.toUpperCase() : event.key;
+  const key = event.code === 'Space'
+    ? 'Space'
+    : event.key.length === 1
+      ? event.key.toLocaleUpperCase('tr-TR')
+      : event.key;
   return [...modifiers, key].join('+');
 }
-import { browser } from 'wxt/browser';
+
+export function formatShortcut(shortcut: string): string {
+  return shortcut === 'Space' ? 'Boşluk' : shortcut;
+}

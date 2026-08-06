@@ -4,9 +4,11 @@
   import AllBookmarksModal from '../../components/AllBookmarksModal.svelte';
   import AllTodosModal from '../../components/AllTodosModal.svelte';
   import BookmarkCard from '../../components/BookmarkCard.svelte';
+  import ClockCard from '../../components/ClockCard.svelte';
   import FavoriteDialog from '../../components/FavoriteDialog.svelte';
   import FavoriteGrid from '../../components/FavoriteGrid.svelte';
   import Icon from '../../components/Icon.svelte';
+  import IconButton from '../../components/IconButton.svelte';
   import PomodoroCard from '../../components/PomodoroCard.svelte';
   import PomodoroSettingsDialog from '../../components/PomodoroSettingsDialog.svelte';
   import SettingsModal from '../../components/SettingsModal.svelte';
@@ -38,6 +40,7 @@
   } from '../../lib/types';
   import { eventShortcut } from '../../lib/utils';
   import {
+    analyzeWallpaper,
     getWallpaper,
     optimizeWallpaper,
     removeWallpaper,
@@ -145,9 +148,21 @@
   async function updateWallpaper(file: File) {
     if (!file.type.startsWith('image/')) throw new Error('Lütfen geçerli bir fotoğraf seçin.');
     if (file.size > 50 * 1024 * 1024) throw new Error('Fotoğraf 50 MB’tan küçük olmalı.');
-    const optimized = await optimizeWallpaper(file);
-    await saveWallpaper(optimized);
+    const { blob, analysis } = await optimizeWallpaper(file);
+    await saveWallpaper(blob);
     await refreshWallpaper();
+    if (settings.theme.autoAccent) {
+      await updateSettings({
+        ...settings,
+        theme: { ...settings.theme, primaryColor: analysis.accentColor },
+      });
+    }
+    return analysis;
+  }
+
+  async function analyzeCurrentWallpaper() {
+    const wallpaper = await getWallpaper();
+    return wallpaper ? analyzeWallpaper(wallpaper) : null;
   }
 
   async function clearWallpaper() {
@@ -158,8 +173,11 @@
   async function handleShortcut(event: KeyboardEvent) {
     const target = event.target as HTMLElement | null;
     if (
-      target?.matches('input, textarea, select, button') ||
+      !loaded ||
+      !timer ||
+      target?.closest('input, textarea, select, button, a, [role="textbox"]') ||
       target?.isContentEditable ||
+      event.isComposing ||
       event.repeat ||
       activeDialog
     ) return;
@@ -194,7 +212,11 @@
     }
     const settingsChange = changes[storageKeys.settings];
     if (areaName === 'sync' && settingsChange?.newValue) {
-      settings = settingsChange.newValue as AppSettings;
+      const incoming = settingsChange.newValue as Partial<AppSettings>;
+      settings = {
+        theme: { ...settings.theme, ...incoming.theme },
+        pomodoro: { ...settings.pomodoro, ...incoming.pomodoro },
+      };
       applyTheme(settings.theme);
     }
   }
@@ -244,7 +266,7 @@
 </script>
 
 <svelte:head>
-  <meta name="theme-color" content={settings.theme.cardColor} />
+  <meta name="theme-color" content={settings.theme.pageBackgroundColor} />
 </svelte:head>
 
 <div
@@ -256,18 +278,19 @@
 <div class:has-image={hasWallpaper} class="wallpaper-overlay" aria-hidden="true"></div>
 
 {#if loaded}
-  <main class="page-shell">
+  <main class:has-wallpaper={hasWallpaper} class="page-shell">
     <header class="topbar">
-      <div class="page-context">
-        <time>{timeLabel}</time>
-        <span>{dateLabel}</span>
-      </div>
+      <ClockCard time={timeLabel} date={dateLabel} />
+      <IconButton label="Görünüm ayarlarını aç" title="Görünüm" class="settings-button" onclick={() => (activeDialog = 'appearance')}>
+        <Icon name="sliders" size={17} />
+      </IconButton>
     </header>
 
     <div class="dashboard-grid">
       <div class="dashboard-column dashboard-column--left">
         <FavoriteGrid
           {favorites}
+          showNames={settings.theme.showFavoriteNames}
           onAdd={() => openFavoriteDialog()}
           onEdit={openFavoriteDialog}
           onDelete={(favorite) => void deleteFavorite(favorite)}
@@ -286,7 +309,7 @@
           onTimerChange={(next) => (timer = next)}
           onOpenSettings={() => (activeDialog = 'pomodoro')}
         />
-        <StatsCard {stats} onShowDetails={() => (activeDialog = 'stats')} />
+        <StatsCard {stats} {timer} onShowDetails={() => (activeDialog = 'stats')} />
       </div>
 
       <div class="dashboard-column dashboard-column--right">
@@ -297,10 +320,6 @@
         />
       </div>
     </div>
-
-    <button class="settings-button" type="button" aria-label="Görünüm ayarlarını aç" onclick={() => (activeDialog = 'appearance')}>
-      <Icon name="settings" size={20} />
-    </button>
   </main>
 {:else}
   <div class="app-loading" aria-label="page-can yükleniyor">
@@ -315,6 +334,7 @@
     onClose={() => (activeDialog = null)}
     onSave={updateSettings}
     onWallpaper={updateWallpaper}
+    onAnalyzeWallpaper={analyzeCurrentWallpaper}
     onRemoveWallpaper={clearWallpaper}
   />
 {/if}
@@ -355,5 +375,5 @@
 {/if}
 
 {#if activeDialog === 'stats'}
-  <StatsDetailDialog {stats} onClose={() => (activeDialog = null)} />
+  <StatsDetailDialog {stats} {timer} onClose={() => (activeDialog = null)} />
 {/if}

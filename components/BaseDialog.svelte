@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { createId } from '../lib/utils';
   import Icon from './Icon.svelte';
+  import IconButton from './IconButton.svelte';
 
   export let title: string;
   export let subtitle = '';
@@ -80,9 +81,9 @@
         <h2 id={headingId}>{title}</h2>
         {#if subtitle}<p>{subtitle}</p>{/if}
       </div>
-      <button class="icon-button subtle" type="button" aria-label="Kapat" onclick={onClose}>
+      <IconButton label="Kapat" onclick={onClose}>
         <Icon name="close" size={18} />
-      </button>
+      </IconButton>
     </header>
     <div class="dialog-content"><slot /></div>
     {#if $$slots.footer}
