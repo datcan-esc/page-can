@@ -62,8 +62,8 @@
   {saving}
 >
   <form id="favorite-form" class="dialog-form" onsubmit={(event) => { event.preventDefault(); void submit(); }}>
-    <Input data-autofocus bind:value={name} label="İsim" maxLength={32} placeholder="Örn. GitHub" />
-    <Input bind:value={url} type="url" inputmode="url" icon="globe" label="Site adresi" placeholder="github.com" />
+    <Input data-autofocus bind:value={name} label="İsim" maxLength={32} placeholder="Örn. Youtube" />
+    <Input bind:value={url} type="url" inputmode="url" icon="globe" label="Site adresi" placeholder="youtube.com" />
     <ShortcutField
       value={shortcut}
       onChange={(value) => (shortcut = value)}

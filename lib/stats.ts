@@ -72,9 +72,7 @@ export async function recordFocusInterval(
 ): Promise<void> {
   const stats = await loadStats();
   const updated = addIntervalToStats(stats, startMs, endMs, completedSession);
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 120);
-  await saveStats(updated.filter((item) => item.date >= localDateKey(cutoff)));
+  await saveStats(updated);
 }
 
 export function withLiveFocus(

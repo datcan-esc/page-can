@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { BOOKMARK_CARD_LIMIT } from './display-limits';
 import type { BookmarkItem, BookmarkTreeItem } from './types';
 
 interface RawBookmarkNode {
@@ -36,7 +37,7 @@ export async function loadBookmarkData(): Promise<{
   walk(roots, []);
   const recent = [...flat]
     .sort((left, right) => right.dateAdded - left.dateAdded)
-    .slice(0, 5);
+    .slice(0, BOOKMARK_CARD_LIMIT);
 
   const tree = (roots[0]?.children ?? []) as BookmarkTreeItem[];
   return { recent, tree, flat };

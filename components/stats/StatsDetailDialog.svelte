@@ -24,7 +24,6 @@
   $: elapsedMonthDays = monthDays.filter((item) => item.date.getTime() <= now);
   $: maxDailyMinutes = Math.max(1, ...monthDays.map((item) => item.minutes));
   $: totalMinutes = monthDays.reduce((total, item) => total + item.minutes, 0);
-  $: totalSessions = monthDays.reduce((total, item) => total + item.sessions, 0);
   $: averageMinutes = averageActiveDayMinutes(elapsedMonthDays);
   $: monthLabel = monthFormatter.format(new Date(now));
 
@@ -48,7 +47,6 @@
   <div class="detail-stat-summary">
     <div><strong>{formatFocusMinutes(totalMinutes)}</strong><span>aylık toplam</span></div>
     <div><strong>{formatFocusMinutes(averageMinutes)}</strong><span>aktif gün ortalaması</span></div>
-    <div><strong>{totalSessions}</strong><span>tamamlanan geri sayım</span></div>
   </div>
 
   <div class="month-calendar" aria-label={`${monthLabel} günlük odak takvimi`}>
@@ -63,22 +61,18 @@
         <div
           class:today={item.isToday}
           class:outside={!item.inMonth}
-          class:empty={item.minutes === 0}
+          class:has-data={item.minutes > 0}
           class="month-day"
           style={`--day-strength: ${dayStrength(item.minutes)}%`}
-          title={`${item.key}: ${formatFocusMinutes(item.minutes)}`}
-          aria-label={`${item.dayNumber} ${item.label}, ${formatFocusMinutes(item.minutes)}`}
+          title={item.minutes > 0 ? `${item.key}: ${formatFocusMinutes(item.minutes)}` : `${item.key}: odak kaydı yok`}
+          aria-label={item.minutes > 0
+            ? `${item.dayNumber} ${item.label}, ${formatFocusMinutes(item.minutes)}`
+            : `${item.dayNumber} ${item.label}, odak kaydı yok`}
         >
           <time datetime={item.key}>{item.dayNumber}</time>
-          {#if item.inMonth}<strong>{formatHourMinute(item.minutes)}</strong>{/if}
+          {#if item.inMonth && item.minutes > 0}<strong>{formatHourMinute(item.minutes)}</strong>{/if}
         </div>
       {/each}
-    </div>
-
-    <div class="month-calendar__legend" aria-hidden="true">
-      <span>0.00</span>
-      <i></i>
-      <span>{formatHourMinute(maxDailyMinutes)} sa.dk</span>
     </div>
   </div>
 </Dialog>

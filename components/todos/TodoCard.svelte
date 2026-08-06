@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Todo } from '../../lib/types';
+  import { TODO_CARD_LIMIT } from '../../lib/display-limits';
   import { createId } from '../../lib/utils';
   import Button from '../ui/Button.svelte';
   import Card from '../ui/Card.svelte';
@@ -14,7 +15,7 @@
   $: activeTodos = todos
     .filter((todo) => !todo.completed)
     .sort((left, right) => right.createdAt - left.createdAt);
-  $: visible = activeTodos.slice(0, 15);
+  $: visible = activeTodos.slice(0, TODO_CARD_LIMIT);
 
   function addTodo(title: string) {
     onChange([

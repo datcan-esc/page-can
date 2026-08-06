@@ -18,7 +18,7 @@
 </script>
 
 <form class="todo-composer" onsubmit={(event) => { event.preventDefault(); submit(); }}>
-  <Input bind:value icon="plus" maxLength={160} {placeholder} aria-label="Yeni yapılacak">
+  <Input bind:value maxLength={160} {placeholder} aria-label="Yeni yapılacak">
     <svelte:fragment slot="trailing">
       <IconButton label="Görevi ekle" variant="ghost" type="submit" class="todo-submit" disabled={!value.trim()}>
         <Icon name="arrow-up" size={15} strokeWidth={2.2} />

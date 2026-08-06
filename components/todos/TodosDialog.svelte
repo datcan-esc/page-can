@@ -1,9 +1,7 @@
 <script lang="ts">
   import type { Todo } from '../../lib/types';
-  import { createId } from '../../lib/utils';
   import Dialog from '../ui/Dialog.svelte';
   import Input from '../ui/Input.svelte';
-  import TodoComposer from './TodoComposer.svelte';
   import TodoRows from './TodoRows.svelte';
   import '../ui/form.css';
   import './todos.css';
@@ -23,18 +21,8 @@
     .filter((todo) => todo.completed)
     .filter(matchesQuery)
     .sort((left, right) => (right.completedAt ?? 0) - (left.completedAt ?? 0));
-  $: activeCount = todos.filter((todo) => !todo.completed).length;
-  $: completedCount = todos.length - activeCount;
-
   function matchesQuery(todo: Todo) {
     return todo.title.toLocaleLowerCase('tr-TR').includes(normalizedQuery);
-  }
-
-  function addTodo(title: string) {
-    onChange([
-      ...todos,
-      { id: createId('todo'), title, completed: false, createdAt: Date.now() },
-    ]);
   }
 
   function updateSubset(original: Todo[], updated: Todo[]) {
@@ -48,45 +36,46 @@
 
 <Dialog
   title="Yapılacaklar"
-  subtitle={`${activeCount} açık · ${completedCount} tamamlanan`}
+  subtitle={`${todos.length}`}
   {onClose}
   wide
 >
-  <div class="todos-modal-toolbar">
-    <TodoComposer onAdd={addTodo} />
+  <div class="todos-dialog-layout">
     <Input
       bind:value={query}
       type="search"
       icon="search"
       class="todo-search"
-      placeholder="Görevlerde ara"
+      placeholder="Yapılacaklar ve tamamlananlarda ara"
       aria-label="Yapılacaklarda ara"
     />
-  </div>
 
-  <div class="todo-sections">
-    <section class="todo-section" aria-labelledby="active-todos-heading">
-      <header>
-        <strong id="active-todos-heading">Yapılacaklar</strong>
-        <span>{active.length}</span>
-      </header>
-      <TodoRows
-        todos={active}
-        onChange={(updated) => updateSubset(active, updated)}
-        emptyText={normalizedQuery ? 'Aramana uygun açık görev yok.' : 'Açık görev yok.'}
-      />
-    </section>
+    <div class="todo-sections">
+      <section class="todo-section" aria-labelledby="active-todos-heading">
+        <header>
+          <strong id="active-todos-heading">Yapılacaklar</strong>
+          <span class="todo-section__divider" aria-hidden="true"></span>
+          <span class="todo-section__count">{active.length}</span>
+        </header>
+        <TodoRows
+          todos={active}
+          onChange={(updated) => updateSubset(active, updated)}
+          emptyText={normalizedQuery ? 'Aramana uygun açık görev yok.' : 'Açık görev yok.'}
+        />
+      </section>
 
-    <section class="todo-section" aria-labelledby="completed-todos-heading">
-      <header>
-        <strong id="completed-todos-heading">Tamamlananlar</strong>
-        <span>{completed.length}</span>
-      </header>
-      <TodoRows
-        todos={completed}
-        onChange={(updated) => updateSubset(completed, updated)}
-        emptyText={normalizedQuery ? 'Aramana uygun tamamlanan görev yok.' : 'Henüz tamamlanan görev yok.'}
-      />
-    </section>
+      <section class="todo-section" aria-labelledby="completed-todos-heading">
+        <header>
+          <strong id="completed-todos-heading">Tamamlananlar</strong>
+          <span class="todo-section__divider" aria-hidden="true"></span>
+          <span class="todo-section__count">{completed.length}</span>
+        </header>
+        <TodoRows
+          todos={completed}
+          onChange={(updated) => updateSubset(completed, updated)}
+          emptyText={normalizedQuery ? 'Aramana uygun tamamlanan görev yok.' : 'Henüz tamamlanan görev yok.'}
+        />
+      </section>
+    </div>
   </div>
 </Dialog>
