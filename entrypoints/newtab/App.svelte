@@ -15,17 +15,25 @@
   import TodosDialog from '../../components/todos/TodosDialog.svelte';
   import Icon from '../../components/ui/Icon.svelte';
   import IconButton from '../../components/ui/IconButton.svelte';
-  import { loadBookmarkData, removeBookmark } from '../../lib/bookmarks';
+  import { loadAllBookmarks, loadRecentBookmarks, removeBookmark } from '../../lib/bookmarks';
+  import { DEFAULT_TIMER } from '../../lib/defaults';
   import { durationForMode, requestCompletion, toggleTimer } from '../../lib/pomodoro';
   import {
+    loadActiveTodos,
+    loadCompletedTodos,
     loadFavorites,
+    loadSettings,
     loadStats,
+    loadStatsRange,
     loadTimer,
-    loadTodos,
+    moveTodosToCompleted,
+    normalizeSettings,
+    saveActiveTodos,
     saveFavorites,
     saveSettings,
     saveTimer,
-    saveTodos,
+    saveTodoBuckets,
+    statsInRange,
     storageKeys,
   } from '../../lib/storage';
   import { applyTheme } from '../../lib/theme';
@@ -38,7 +46,7 @@
     PomodoroState,
     Todo,
   } from '../../lib/types';
-  import { eventShortcut } from '../../lib/utils';
+  import { eventShortcut, localMonthRange, localWeekRange } from '../../lib/utils';
   import {
     analyzeWallpaper,
     getWallpaper,
@@ -48,17 +56,30 @@
   } from '../../lib/wallpaper';
 
   export let initialSettings: AppSettings;
+  export let initialError = '';
 
   type DialogName = 'appearance' | 'favorite' | 'bookmarks' | 'todos' | 'pomodoro' | 'stats';
 
   let settings = initialSettings;
   let favorites: Favorite[] = [];
-  let todos: Todo[] = [];
-  let timer: PomodoroState;
-  let stats: DailyStat[] = [];
+  let activeTodos: Todo[] = [];
+  let completedTodos: Todo[] = [];
+  let completedTodosLoaded = false;
+  let timer: PomodoroState = { ...DEFAULT_TIMER };
+  let weeklyStats: DailyStat[] = [];
+  let monthlyStats: DailyStat[] = [];
+  let monthlyStatsLoaded = false;
   let recentBookmarks: BookmarkItem[] = [];
   let allBookmarks: BookmarkItem[] = [];
+  let bookmarksLoading = false;
+  let todosLoading = false;
+  let statsLoading = false;
+  let bookmarksLoadVersion = 0;
+  let todosLoadVersion = 0;
+  let statsLoadVersion = 0;
+  let todoOperationQueue: Promise<void> = Promise.resolve();
   let loaded = false;
+  let appError = initialError;
   let activeDialog: DialogName | null = null;
   let editingFavorite: Favorite | null = null;
   let wallpaperUrl = '';
@@ -83,10 +104,30 @@
     timeLabel = timeFormatter.format(now);
   }
 
-  async function refreshBookmarks() {
-    const data = await loadBookmarkData();
-    recentBookmarks = data.recent;
-    allBookmarks = data.flat;
+  function errorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error && error.message ? error.message : fallback;
+  }
+
+  function reportError(error: unknown, fallback: string) {
+    appError = errorMessage(error, fallback);
+  }
+
+  async function refreshRecentBookmarks() {
+    recentBookmarks = await loadRecentBookmarks();
+  }
+
+  async function refreshAllBookmarks(version = bookmarksLoadVersion) {
+    const bookmarks = await loadAllBookmarks();
+    if (version === bookmarksLoadVersion && activeDialog === 'bookmarks') {
+      allBookmarks = bookmarks;
+    }
+  }
+
+  function handleBookmarksChanged() {
+    void refreshRecentBookmarks().catch((error) => reportError(error, 'Yer imleri güncellenemedi.'));
+    if (activeDialog === 'bookmarks') {
+      void refreshAllBookmarks().catch((error) => reportError(error, 'Yer imleri güncellenemedi.'));
+    }
   }
 
   async function refreshWallpaper() {
@@ -97,8 +138,8 @@
   }
 
   async function updateFavorites(next: Favorite[]) {
+    await saveFavorites(next);
     favorites = next;
-    await saveFavorites(favorites);
   }
 
   function openFavoriteDialog(favorite: Favorite | null = null) {
@@ -116,23 +157,68 @@
   }
 
   async function deleteFavorite(favorite: Favorite) {
-    await updateFavorites(favorites.filter((item) => item.id !== favorite.id));
+    try {
+      await updateFavorites(favorites.filter((item) => item.id !== favorite.id));
+    } catch (error) {
+      reportError(error, 'Favori silinemedi.');
+    }
   }
 
   async function deleteBookmark(bookmark: BookmarkItem) {
-    await removeBookmark(bookmark.id);
-    await refreshBookmarks();
+    const previousRecent = recentBookmarks;
+    const previousAll = allBookmarks;
+    recentBookmarks = recentBookmarks.filter((item) => item.id !== bookmark.id);
+    allBookmarks = allBookmarks.filter((item) => item.id !== bookmark.id);
+    try {
+      await removeBookmark(bookmark.id);
+    } catch (error) {
+      recentBookmarks = previousRecent;
+      allBookmarks = previousAll;
+      reportError(error, 'Yer imi silinemedi.');
+    }
   }
 
-  async function updateTodos(next: Todo[]) {
-    todos = next;
-    await saveTodos(todos);
+  function queueTodoOperation<T>(operation: () => Promise<T>): Promise<T> {
+    const result = todoOperationQueue.catch(() => undefined).then(operation);
+    todoOperationQueue = result.then(() => undefined, () => undefined);
+    return result;
+  }
+
+  function updateActiveTodos(next: Todo[]): Promise<void> {
+    return queueTodoOperation(async () => {
+      const nextActive = next.filter((todo) => !todo.completed);
+      const newlyCompleted = next.filter((todo) => todo.completed);
+      if (newlyCompleted.length) {
+        await moveTodosToCompleted(nextActive, newlyCompleted);
+        if (completedTodosLoaded) {
+          const completedIds = new Set(newlyCompleted.map((todo) => todo.id));
+          completedTodos = [
+            ...completedTodos.filter((todo) => !completedIds.has(todo.id)),
+            ...newlyCompleted,
+          ];
+        }
+      } else {
+        await saveActiveTodos(nextActive);
+      }
+      activeTodos = nextActive;
+    });
+  }
+
+  function updateAllTodos(next: Todo[]): Promise<void> {
+    return queueTodoOperation(async () => {
+      const nextActive = next.filter((todo) => !todo.completed);
+      const nextCompleted = next.filter((todo) => todo.completed);
+      await saveTodoBuckets(nextActive, nextCompleted);
+      activeTodos = nextActive;
+      completedTodos = nextCompleted;
+    });
   }
 
   async function updateSettings(next: AppSettings) {
-    settings = structuredClone(next);
+    const normalized = normalizeSettings(next);
+    await saveSettings(normalized);
+    settings = structuredClone(normalized);
     applyTheme(settings.theme);
-    await saveSettings(settings);
 
     if (timer.status === 'idle') {
       const durationSec = durationForMode(timer.mode, settings);
@@ -170,6 +256,80 @@
     await refreshWallpaper();
   }
 
+  async function openBookmarksDialog() {
+    activeDialog = 'bookmarks';
+    bookmarksLoading = true;
+    const version = ++bookmarksLoadVersion;
+    try {
+      await refreshAllBookmarks(version);
+    } catch (error) {
+      reportError(error, 'Tüm yer imleri yüklenemedi.');
+    } finally {
+      if (version === bookmarksLoadVersion) bookmarksLoading = false;
+    }
+  }
+
+  function closeBookmarksDialog() {
+    bookmarksLoadVersion += 1;
+    bookmarksLoading = false;
+    allBookmarks = [];
+    activeDialog = null;
+  }
+
+  async function openTodosDialog() {
+    activeDialog = 'todos';
+    todosLoading = true;
+    completedTodosLoaded = false;
+    completedTodos = [];
+    const version = ++todosLoadVersion;
+    try {
+      const loadedTodos = await queueTodoOperation(loadCompletedTodos);
+      if (version === todosLoadVersion && activeDialog === 'todos') {
+        completedTodos = loadedTodos;
+        completedTodosLoaded = true;
+      }
+    } catch (error) {
+      reportError(error, 'Tamamlanan görevler yüklenemedi.');
+    } finally {
+      if (version === todosLoadVersion) todosLoading = false;
+    }
+  }
+
+  function closeTodosDialog() {
+    todosLoadVersion += 1;
+    todosLoading = false;
+    completedTodosLoaded = false;
+    completedTodos = [];
+    activeDialog = null;
+  }
+
+  async function openStatsDialog() {
+    activeDialog = 'stats';
+    statsLoading = true;
+    monthlyStatsLoaded = false;
+    monthlyStats = [];
+    const version = ++statsLoadVersion;
+    try {
+      const loadedStats = await loadStatsRange(localMonthRange());
+      if (version === statsLoadVersion && activeDialog === 'stats') {
+        monthlyStats = loadedStats;
+        monthlyStatsLoaded = true;
+      }
+    } catch (error) {
+      reportError(error, 'Aylık odak verileri yüklenemedi.');
+    } finally {
+      if (version === statsLoadVersion) statsLoading = false;
+    }
+  }
+
+  function closeStatsDialog() {
+    statsLoadVersion += 1;
+    statsLoading = false;
+    monthlyStatsLoaded = false;
+    monthlyStats = [];
+    activeDialog = null;
+  }
+
   async function handleShortcut(event: KeyboardEvent) {
     const target = event.target as HTMLElement | null;
     if (
@@ -185,7 +345,11 @@
     const pressed = eventShortcut(event);
     if (pressed === settings.pomodoro.shortcut) {
       event.preventDefault();
-      timer = await toggleTimer(timer, settings);
+      try {
+        timer = await toggleTimer(timer, settings);
+      } catch (error) {
+        reportError(error, 'Odak sayacı güncellenemedi.');
+      }
       return;
     }
 
@@ -196,45 +360,81 @@
     }
   }
 
+  async function syncLocalChanges(
+    changes: Record<string, { oldValue?: unknown; newValue?: unknown }>,
+  ) {
+    const tasks: Promise<void>[] = [];
+    if (changes[storageKeys.favorites]) {
+      tasks.push(loadFavorites().then((value) => { favorites = value; }));
+    }
+    if (changes[storageKeys.activeTodos] || changes[storageKeys.legacyTodos]) {
+      tasks.push(loadActiveTodos().then((value) => { activeTodos = value; }));
+    }
+    if (completedTodosLoaded && changes[storageKeys.completedTodos]) {
+      tasks.push(loadCompletedTodos().then((value) => { completedTodos = value; }));
+    }
+    if (changes[storageKeys.timer]) {
+      tasks.push(loadTimer().then((value) => { timer = value; }));
+    }
+    if (changes[storageKeys.stats]) {
+      tasks.push(loadStats().then((value) => {
+        weeklyStats = statsInRange(value, localWeekRange());
+        if (monthlyStatsLoaded) monthlyStats = statsInRange(value, localMonthRange());
+      }));
+    }
+    await Promise.all(tasks);
+  }
+
   function handleStorageChanges(
     changes: Record<string, { oldValue?: unknown; newValue?: unknown }>,
     areaName: string,
   ) {
     if (areaName === 'local') {
-      const timerChange = changes[storageKeys.timer];
-      const statsChange = changes[storageKeys.stats];
-      if (timerChange?.newValue) {
-        timer = timerChange.newValue as PomodoroState;
-      }
-      if (statsChange?.newValue) {
-        stats = statsChange.newValue as DailyStat[];
-      }
+      void syncLocalChanges(changes)
+        .catch((error) => reportError(error, 'Veriler diğer sekmeyle eşitlenemedi.'));
     }
-    const settingsChange = changes[storageKeys.settings];
-    if (areaName === 'sync' && settingsChange?.newValue) {
-      const incoming = settingsChange.newValue as Partial<AppSettings>;
-      settings = {
-        theme: { ...settings.theme, ...incoming.theme },
-        pomodoro: { ...settings.pomodoro, ...incoming.pomodoro },
-      };
-      applyTheme(settings.theme);
+    if (areaName === 'sync' && changes[storageKeys.settings]) {
+      void loadSettings().then((value) => {
+        settings = value;
+        applyTheme(settings.theme);
+      }).catch((error) => reportError(error, 'Ayarlar eşitlenemedi.'));
+    }
+  }
+
+  function applyInitialResult<T>(
+    result: PromiseSettledResult<T>,
+    apply: (value: T) => void,
+  ): boolean {
+    if (result.status === 'fulfilled') {
+      apply(result.value);
+      return true;
+    }
+    return false;
+  }
+
+  function markInitialLoadErrors(results: PromiseSettledResult<unknown>[]) {
+    if (results.some((result) => result.status === 'rejected')) {
+      appError = 'Bazı veriler yüklenemedi. Sayfayı yenileyerek tekrar deneyebilirsiniz.';
     }
   }
 
   onMount(() => {
     const initialize = async () => {
-      const [loadedFavorites, loadedTodos, loadedTimer, loadedStats] = await Promise.all([
+      const results = await Promise.allSettled([
         loadFavorites(),
-        loadTodos(),
+        loadActiveTodos(),
         loadTimer(),
-        loadStats(),
-        refreshBookmarks(),
+        loadStatsRange(localWeekRange()),
+        loadRecentBookmarks(),
         refreshWallpaper(),
       ]);
-      favorites = loadedFavorites;
-      todos = loadedTodos;
-      timer = loadedTimer;
-      stats = loadedStats;
+
+      applyInitialResult(results[0], (value) => { favorites = value; });
+      applyInitialResult(results[1], (value) => { activeTodos = value; });
+      applyInitialResult(results[2], (value) => { timer = value; });
+      applyInitialResult(results[3], (value) => { weeklyStats = value; });
+      applyInitialResult(results[4], (value) => { recentBookmarks = value; });
+      markInitialLoadErrors(results);
       loaded = true;
 
       if (timer.status === 'running' && timer.endsAt && timer.endsAt <= Date.now()) {
@@ -242,24 +442,27 @@
       }
     };
 
-    void initialize();
+    void initialize().catch((error) => {
+      loaded = true;
+      reportError(error, 'Uygulama verileri yüklenemedi.');
+    });
     updateClock();
     clockInterval = window.setInterval(updateClock, 30_000);
     window.addEventListener('keydown', handleShortcut);
     browser.storage.onChanged.addListener(handleStorageChanges);
-    browser.bookmarks.onCreated.addListener(refreshBookmarks);
-    browser.bookmarks.onRemoved.addListener(refreshBookmarks);
-    browser.bookmarks.onChanged.addListener(refreshBookmarks);
-    browser.bookmarks.onMoved.addListener(refreshBookmarks);
+    browser.bookmarks.onCreated.addListener(handleBookmarksChanged);
+    browser.bookmarks.onRemoved.addListener(handleBookmarksChanged);
+    browser.bookmarks.onChanged.addListener(handleBookmarksChanged);
+    browser.bookmarks.onMoved.addListener(handleBookmarksChanged);
   });
 
   onDestroy(() => {
     window.removeEventListener('keydown', handleShortcut);
     browser.storage.onChanged.removeListener(handleStorageChanges);
-    browser.bookmarks.onCreated.removeListener(refreshBookmarks);
-    browser.bookmarks.onRemoved.removeListener(refreshBookmarks);
-    browser.bookmarks.onChanged.removeListener(refreshBookmarks);
-    browser.bookmarks.onMoved.removeListener(refreshBookmarks);
+    browser.bookmarks.onCreated.removeListener(handleBookmarksChanged);
+    browser.bookmarks.onRemoved.removeListener(handleBookmarksChanged);
+    browser.bookmarks.onChanged.removeListener(handleBookmarksChanged);
+    browser.bookmarks.onMoved.removeListener(handleBookmarksChanged);
     if (clockInterval) window.clearInterval(clockInterval);
     if (wallpaperUrl) URL.revokeObjectURL(wallpaperUrl);
   });
@@ -297,7 +500,7 @@
         />
         <BookmarkCard
           bookmarks={recentBookmarks}
-          onShowAll={() => (activeDialog = 'bookmarks')}
+          onShowAll={() => void openBookmarksDialog()}
           onRemove={(bookmark) => void deleteBookmark(bookmark)}
         />
       </div>
@@ -309,14 +512,17 @@
           onTimerChange={(next) => (timer = next)}
           onOpenSettings={() => (activeDialog = 'pomodoro')}
         />
-        <StatsCard {stats} {timer} onShowDetails={() => (activeDialog = 'stats')} />
+        <StatsCard stats={weeklyStats} {timer} onShowDetails={() => void openStatsDialog()} />
       </div>
 
       <div class="dashboard-column dashboard-column--right">
         <TodoCard
-          {todos}
-          onChange={updateTodos}
-          onShowAll={() => (activeDialog = 'todos')}
+          todos={activeTodos}
+          onChange={(next) => {
+            void updateActiveTodos(next)
+              .catch((error) => reportError(error, 'Görevler kaydedilemedi.'));
+          }}
+          onShowAll={() => void openTodosDialog()}
         />
       </div>
     </div>
@@ -324,6 +530,13 @@
 {:else}
   <div class="app-loading" aria-label="page-can yükleniyor">
     <span class="brand-mark large">pc</span>
+  </div>
+{/if}
+
+{#if appError}
+  <div class="app-notice" role="alert">
+    <span>{appError}</span>
+    <button type="button" onclick={() => (appError = '')}>Kapat</button>
   </div>
 {/if}
 
@@ -352,16 +565,22 @@
 {#if activeDialog === 'bookmarks'}
   <BookmarksDialog
     bookmarks={allBookmarks}
-    onClose={() => (activeDialog = null)}
+    loading={bookmarksLoading}
+    onClose={closeBookmarksDialog}
     onRemove={(bookmark) => void deleteBookmark(bookmark)}
   />
 {/if}
 
 {#if activeDialog === 'todos'}
   <TodosDialog
-    {todos}
-    onClose={() => (activeDialog = null)}
-    onChange={updateTodos}
+    todos={[...activeTodos, ...(completedTodosLoaded ? completedTodos : [])]}
+    loading={todosLoading}
+    onClose={closeTodosDialog}
+    onChange={(next) => {
+      const persist = completedTodosLoaded ? updateAllTodos(next) : updateActiveTodos(next);
+      void persist
+        .catch((error) => reportError(error, 'Görevler kaydedilemedi.'));
+    }}
   />
 {/if}
 
@@ -375,5 +594,5 @@
 {/if}
 
 {#if activeDialog === 'stats'}
-  <StatsDetailDialog {stats} {timer} onClose={() => (activeDialog = null)} />
+  <StatsDetailDialog stats={monthlyStats} {timer} loading={statsLoading} onClose={closeStatsDialog} />
 {/if}

@@ -70,11 +70,3 @@ export interface BookmarkItem {
   dateAdded: number;
   path: string;
 }
-
-export interface BookmarkTreeItem {
-  id: string;
-  title: string;
-  url?: string;
-  dateAdded?: number;
-  children?: BookmarkTreeItem[];
-}

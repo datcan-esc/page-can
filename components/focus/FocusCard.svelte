@@ -15,6 +15,7 @@
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
   import SegmentedToggle from '../ui/SegmentedToggle.svelte';
+  import '../ui/form.css';
   import './focus.css';
 
   export let timer: PomodoroState;
@@ -24,6 +25,8 @@
 
   let displayValue = timer.mode === 'focus' ? remainingSeconds(timer) : elapsedSeconds(timer);
   let completionRequestedFor = '';
+  let working = false;
+  let error = '';
 
   $: if (timer.status !== 'running') {
     displayValue = timer.mode === 'focus' ? timer.remainingSec : timer.elapsedSec;
@@ -52,7 +55,11 @@
         completionRequestedFor !== timer.sessionId
       ) {
         completionRequestedFor = timer.sessionId;
-        void requestCompletion(timer.sessionId);
+        void requestCompletion(timer.sessionId).catch((completionError) => {
+          error = completionError instanceof Error
+            ? completionError.message
+            : 'Tamamlanan odak kaydedilemedi.';
+        });
       }
     };
 
@@ -69,16 +76,42 @@
   });
 
   async function handleToggle() {
-    onTimerChange(await toggleTimer(timer, settings));
+    if (working) return;
+    working = true;
+    error = '';
+    try {
+      onTimerChange(await toggleTimer(timer, settings));
+    } catch (timerError) {
+      error = timerError instanceof Error ? timerError.message : 'Sayaç güncellenemedi.';
+    } finally {
+      working = false;
+    }
   }
 
   async function handleReset() {
-    onTimerChange(await resetTimer(timer, settings));
+    if (working) return;
+    working = true;
+    error = '';
+    try {
+      onTimerChange(await resetTimer(timer, settings));
+    } catch (timerError) {
+      error = timerError instanceof Error ? timerError.message : 'Sayaç sıfırlanamadı.';
+    } finally {
+      working = false;
+    }
   }
 
   async function handleMode(mode: PomodoroMode) {
-    if (mode === timer.mode) return;
-    onTimerChange(await selectMode(mode, timer, settings));
+    if (working || mode === timer.mode) return;
+    working = true;
+    error = '';
+    try {
+      onTimerChange(await selectMode(mode, timer, settings));
+    } catch (timerError) {
+      error = timerError instanceof Error ? timerError.message : 'Odak modu değiştirilemedi.';
+    } finally {
+      working = false;
+    }
   }
 </script>
 
@@ -119,13 +152,14 @@
   </div>
 
   <div class="timer-actions">
-    <IconButton label="Sıfırla" variant="ghost" disabled={!canReset} onclick={handleReset}>
+    <IconButton label="Sıfırla" variant="ghost" disabled={!canReset || working} onclick={handleReset}>
       <Icon name="reset" size={16} />
     </IconButton>
-    <Button variant="default" class="timer-primary" onclick={handleToggle}>
+    <Button variant="default" class="timer-primary" disabled={working} onclick={handleToggle}>
       <Icon name={timer.status === 'running' ? 'pause' : 'play'} size={17} />
       {timer.status === 'running' ? 'Duraklat' : timer.status === 'paused' ? 'Devam et' : 'Başlat'}
     </Button>
     <span class="timer-spacer" aria-hidden="true"></span>
   </div>
+  {#if error}<p class="form-error">{error}</p>{/if}
 </Card>

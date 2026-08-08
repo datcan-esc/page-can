@@ -8,10 +8,12 @@
     withLiveFocus,
   } from '../../lib/stats';
   import Dialog from '../ui/Dialog.svelte';
+  import '../ui/form.css';
   import './stats.css';
 
   export let stats: DailyStat[] = [];
   export let timer: PomodoroState;
+  export let loading = false;
   export let onClose: () => void;
 
   let now = Date.now();
@@ -44,35 +46,39 @@
 </script>
 
 <Dialog title={monthLabel} subtitle="Günlük odak dağılımı" {onClose} wide>
-  <div class="detail-stat-summary">
-    <div><strong>{formatFocusMinutes(totalMinutes)}</strong><span>aylık toplam</span></div>
-    <div><strong>{formatFocusMinutes(averageMinutes)}</strong><span>aktif gün ortalaması</span></div>
-  </div>
-
-  <div class="month-calendar" aria-label={`${monthLabel} günlük odak takvimi`}>
-    <div class="month-calendar__weekdays" aria-hidden="true">
-      {#each ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] as weekday}
-        <span>{weekday}</span>
-      {/each}
+  {#if loading}
+    <div class="modal-empty" role="status">Aylık odak verileri yükleniyor…</div>
+  {:else}
+    <div class="detail-stat-summary">
+      <div><strong>{formatFocusMinutes(totalMinutes)}</strong><span>aylık toplam</span></div>
+      <div><strong>{formatFocusMinutes(averageMinutes)}</strong><span>aktif gün ortalaması</span></div>
     </div>
 
-    <div class="month-calendar__days">
-      {#each calendarDays as item (item.key)}
-        <div
-          class:today={item.isToday}
-          class:outside={!item.inMonth}
-          class:has-data={item.minutes > 0}
-          class="month-day"
-          style={`--day-strength: ${dayStrength(item.minutes)}%`}
-          title={item.minutes > 0 ? `${item.key}: ${formatFocusMinutes(item.minutes)}` : `${item.key}: odak kaydı yok`}
-          aria-label={item.minutes > 0
-            ? `${item.dayNumber} ${item.label}, ${formatFocusMinutes(item.minutes)}`
-            : `${item.dayNumber} ${item.label}, odak kaydı yok`}
-        >
-          <time datetime={item.key}>{item.dayNumber}</time>
-          {#if item.inMonth && item.minutes > 0}<strong>{formatHourMinute(item.minutes)}</strong>{/if}
-        </div>
-      {/each}
+    <div class="month-calendar" aria-label={`${monthLabel} günlük odak takvimi`}>
+      <div class="month-calendar__weekdays" aria-hidden="true">
+        {#each ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'] as weekday}
+          <span>{weekday}</span>
+        {/each}
+      </div>
+
+      <div class="month-calendar__days">
+        {#each calendarDays as item (item.key)}
+          <div
+            class:today={item.isToday}
+            class:outside={!item.inMonth}
+            class:has-data={item.minutes > 0}
+            class="month-day"
+            style={`--day-strength: ${dayStrength(item.minutes)}%`}
+            title={item.minutes > 0 ? `${item.key}: ${formatFocusMinutes(item.minutes)}` : `${item.key}: odak kaydı yok`}
+            aria-label={item.minutes > 0
+              ? `${item.dayNumber} ${item.label}, ${formatFocusMinutes(item.minutes)}`
+              : `${item.dayNumber} ${item.label}, odak kaydı yok`}
+          >
+            <time datetime={item.key}>{item.dayNumber}</time>
+            {#if item.inMonth && item.minutes > 0}<strong>{formatHourMinute(item.minutes)}</strong>{/if}
+          </div>
+        {/each}
+      </div>
     </div>
-  </div>
+  {/if}
 </Dialog>

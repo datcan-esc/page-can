@@ -1,0 +1,183 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
+
+async function createStorageHarness(initialState = {}) {
+  const state = {
+    local: structuredClone(initialState.local ?? {}),
+    sync: structuredClone(initialState.sync ?? {}),
+    bookmarks: structuredClone(initialState.bookmarks ?? { recent: [], tree: [] }),
+    calls: { getRecent: 0, getTree: 0 },
+    storageGets: { local: [], sync: [] },
+  };
+  globalThis.__pageCanStorageTestState = state;
+
+  const server = await createServer({
+    configFile: false,
+    appType: 'custom',
+    resolve: {
+      alias: {
+        'wxt/browser': fileURLToPath(new URL('./browser.mock.mjs', import.meta.url)),
+      },
+    },
+    server: { middlewareMode: true, hmr: false, ws: false },
+  });
+
+  const storage = await server.ssrLoadModule('/lib/storage.ts');
+  const utils = await server.ssrLoadModule('/lib/utils.ts');
+  const bookmarks = await server.ssrLoadModule('/lib/bookmarks.ts');
+  return {
+    state,
+    bookmarks,
+    storage,
+    utils,
+    async close() {
+      await server.close();
+      delete globalThis.__pageCanStorageTestState;
+    },
+  };
+}
+
+test('storage sınırları ve todo migration', async (t) => {
+  await t.test('başlangıçta tam yer imi ağacını okumaz', async () => {
+    const recent = Array.from({ length: 8 }, (_, index) => ({
+      id: String(index),
+      title: `Yer imi ${index}`,
+      url: `https://example.com/${index}`,
+      dateAdded: index,
+    }));
+    const harness = await createStorageHarness({
+      bookmarks: {
+        recent,
+        tree: [{ id: 'root', title: '', children: recent }],
+      },
+    });
+    try {
+      assert.equal((await harness.bookmarks.loadRecentBookmarks()).length, 5);
+      assert.deepEqual(harness.state.calls, { getRecent: 1, getTree: 0 });
+      assert.equal((await harness.bookmarks.loadAllBookmarks()).length, 8);
+      assert.deepEqual(harness.state.calls, { getRecent: 1, getTree: 1 });
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('URL ve tarih aralıklarını normalize eder', async () => {
+    const harness = await createStorageHarness();
+    try {
+      assert.equal(harness.utils.normalizeUrl('example.com'), 'https://example.com/');
+      assert.deepEqual(
+        harness.utils.localWeekRange(new Date(2026, 7, 9, 12)),
+        { start: '2026-08-03', end: '2026-08-09' },
+      );
+      assert.deepEqual(
+        harness.utils.localMonthRange(new Date(2026, 7, 9, 12)),
+        { start: '2026-08-01', end: '2026-08-31' },
+      );
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('geçersiz ayarları güvenli varsayılanlara çevirir', async () => {
+    const harness = await createStorageHarness();
+    try {
+      const settings = harness.storage.normalizeSettings({
+        theme: { cardOpacity: 99, primaryColor: 'not-a-color' },
+        pomodoro: { focusMinutes: Number.NaN, shortcut: 42 },
+      });
+      assert.equal(settings.theme.cardOpacity, 1);
+      assert.equal(settings.theme.primaryColor, '#5e5ce6');
+      assert.equal(settings.pomodoro.focusMinutes, 25);
+      assert.equal(settings.pomodoro.shortcut, 'Space');
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('eski todo listesini aktif ve tamamlanan anahtarlarına taşır', async () => {
+    const harness = await createStorageHarness({
+      local: {
+        todos: [
+          { id: 'active', title: 'Açık görev', completed: false, createdAt: 1 },
+          { id: 'done', title: 'Biten görev', completed: true, createdAt: 2, completedAt: 3 },
+        ],
+      },
+    });
+    try {
+      const active = await harness.storage.loadActiveTodos();
+      const completed = await harness.storage.loadCompletedTodos();
+      assert.deepEqual(active.map((todo) => todo.id), ['active']);
+      assert.deepEqual(completed.map((todo) => todo.id), ['done']);
+      assert.equal('todos' in harness.state.local, false);
+      assert.deepEqual(harness.state.local.activeTodos.map((todo) => todo.id), ['active']);
+      assert.deepEqual(harness.state.local.completedTodos.map((todo) => todo.id), ['done']);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('aktif görev açılışı tamamlanan görevleri okumaz', async () => {
+    const harness = await createStorageHarness({
+      local: {
+        activeTodos: [{ id: 'active', title: 'Açık görev', completed: false, createdAt: 1 }],
+        completedTodos: [{ id: 'done', title: 'Biten görev', completed: true, createdAt: 2 }],
+      },
+    });
+    try {
+      await harness.storage.loadActiveTodos();
+      assert.equal(
+        harness.state.storageGets.local.flat().includes('completedTodos'),
+        false,
+      );
+      await harness.storage.loadCompletedTodos();
+      assert.equal(
+        harness.state.storageGets.local.flat().includes('completedTodos'),
+        true,
+      );
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('yeni tamamlanan görevi eski tamamlananları silmeden ekler', async () => {
+    const harness = await createStorageHarness({
+      local: {
+        activeTodos: [{ id: 'next', title: 'Yeni görev', completed: false, createdAt: 4 }],
+        completedTodos: [{ id: 'done', title: 'Eski görev', completed: true, createdAt: 1, completedAt: 2 }],
+      },
+    });
+    try {
+      await harness.storage.moveTodosToCompleted([], [
+        { id: 'next', title: 'Yeni görev', completed: true, createdAt: 4, completedAt: 5 },
+      ]);
+      assert.deepEqual(
+        harness.state.local.completedTodos.map((todo) => todo.id).sort(),
+        ['done', 'next'],
+      );
+      assert.deepEqual(harness.state.local.activeTodos, []);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('yalnızca istenen istatistik aralığını döndürür', async () => {
+    const harness = await createStorageHarness();
+    try {
+      const values = [
+        { date: '2026-08-02', focusSeconds: 60, completedSessions: 1 },
+        { date: '2026-08-03', focusSeconds: 120, completedSessions: 1 },
+        { date: '2026-08-09', focusSeconds: 180, completedSessions: 2 },
+        { date: '2026-08-10', focusSeconds: 240, completedSessions: 2 },
+      ];
+      assert.deepEqual(
+        harness.storage.statsInRange(values, { start: '2026-08-03', end: '2026-08-09' })
+          .map((item) => item.date),
+        ['2026-08-03', '2026-08-09'],
+      );
+    } finally {
+      await harness.close();
+    }
+  });
+});

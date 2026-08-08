@@ -41,15 +41,20 @@
     }
 
     saving = true;
-    await onSave({
-      id: favorite?.id ?? createId('favorite'),
-      name: name.trim(),
-      url: normalizedUrl,
-      shortcut,
-      createdAt: favorite?.createdAt ?? Date.now(),
-    });
-    saving = false;
-    onClose();
+    try {
+      await onSave({
+        id: favorite?.id ?? createId('favorite'),
+        name: name.trim(),
+        url: normalizedUrl,
+        shortcut,
+        createdAt: favorite?.createdAt ?? Date.now(),
+      });
+      onClose();
+    } catch (saveError) {
+      error = saveError instanceof Error ? saveError.message : 'Favori kaydedilemedi.';
+    } finally {
+      saving = false;
+    }
   }
 </script>
 
@@ -63,7 +68,7 @@
 >
   <form id="favorite-form" class="dialog-form" onsubmit={(event) => { event.preventDefault(); void submit(); }}>
     <Input data-autofocus bind:value={name} label="İsim" maxLength={32} placeholder="Örn. Youtube" />
-    <Input bind:value={url} type="url" inputmode="url" icon="globe" label="Site adresi" placeholder="youtube.com" />
+    <Input bind:value={url} type="text" inputmode="url" icon="globe" label="Site adresi" placeholder="youtube.com" />
     <ShortcutField
       value={shortcut}
       onChange={(value) => (shortcut = value)}

@@ -1,9 +1,11 @@
 <script lang="ts">
   import type { BookmarkItem } from '../../lib/types';
+  import { BOOKMARK_CARD_LIMIT } from '../../lib/display-limits';
   import Card from '../ui/Card.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
   import List from '../ui/List.svelte';
+  import ListLimitNote from '../ui/ListLimitNote.svelte';
   import BookmarkRow from './BookmarkRow.svelte';
   import './bookmarks.css';
 
@@ -37,5 +39,11 @@
         </span>
       </div>
     {/each}
+    {#if bookmarks.length >= BOOKMARK_CARD_LIMIT}
+      <ListLimitNote
+        text={`${BOOKMARK_CARD_LIMIT} yer imi gösteriliyor. Daha fazlası için`}
+        {onShowAll}
+      />
+    {/if}
   </List>
 </Card>

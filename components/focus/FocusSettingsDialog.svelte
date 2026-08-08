@@ -17,15 +17,25 @@
 
   async function submit() {
     error = '';
+    const focusMinutes = Number(draft.focusMinutes);
+    if (!Number.isFinite(focusMinutes) || focusMinutes < 1 || focusMinutes > 240) {
+      error = 'Odak süresi 1 ile 240 dakika arasında olmalı.';
+      return;
+    }
     if (draft.shortcut && favoriteShortcuts.includes(draft.shortcut)) {
       error = 'Bu kısayol bir favoride kullanılıyor.';
       return;
     }
 
     saving = true;
-    await onSave(draft);
-    saving = false;
-    onClose();
+    try {
+      await onSave({ ...draft, focusMinutes: Math.round(focusMinutes) });
+      onClose();
+    } catch (saveError) {
+      error = saveError instanceof Error ? saveError.message : 'Odak ayarları kaydedilemedi.';
+    } finally {
+      saving = false;
+    }
   }
 </script>
 
@@ -44,6 +54,7 @@
       type="number"
       min={1}
       max={240}
+      required
       suffix="dakika"
       label="Geri sayım süresi"
     />

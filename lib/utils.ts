@@ -43,22 +43,47 @@ export function localDateKey(date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
-export function shortcutFromEvent(event: KeyboardEvent): string | null {
-  const ignoredKeys = new Set(['Control', 'Shift', 'Alt', 'Meta', 'CapsLock', 'Tab']);
-  if (ignoredKeys.has(event.key)) return null;
+export interface LocalDateRange {
+  start: string;
+  end: string;
+}
 
+export function localWeekRange(reference = new Date()): LocalDateRange {
+  const start = new Date(reference);
+  start.setHours(12, 0, 0, 0);
+  const day = start.getDay() || 7;
+  start.setDate(start.getDate() - day + 1);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: localDateKey(start), end: localDateKey(end) };
+}
+
+export function localMonthRange(reference = new Date()): LocalDateRange {
+  const start = new Date(reference.getFullYear(), reference.getMonth(), 1, 12);
+  const end = new Date(reference.getFullYear(), reference.getMonth() + 1, 0, 12);
+  return { start: localDateKey(start), end: localDateKey(end) };
+}
+
+function shortcutParts(event: KeyboardEvent): { modifiers: string[]; key: string } {
   const modifiers = [
     event.ctrlKey ? 'Ctrl' : '',
     event.altKey ? 'Alt' : '',
     event.shiftKey ? 'Shift' : '',
     event.metaKey ? 'Meta' : '',
   ].filter(Boolean);
-
   const key = event.code === 'Space'
     ? 'Space'
     : event.key.length === 1
       ? event.key.toLocaleUpperCase('tr-TR')
       : event.key;
+  return { modifiers, key };
+}
+
+export function shortcutFromEvent(event: KeyboardEvent): string | null {
+  const ignoredKeys = new Set(['Control', 'Shift', 'Alt', 'Meta', 'CapsLock', 'Tab']);
+  if (ignoredKeys.has(event.key)) return null;
+
+  const { modifiers, key } = shortcutParts(event);
   const isFunctionKey = /^F([1-9]|1[0-2])$/.test(key);
   const isDirectKey = /^[A-ZÇĞİÖŞÜ0-9]$/u.test(key) || key === 'Space';
   if (modifiers.length === 0 && !isFunctionKey && !isDirectKey) return null;
@@ -67,17 +92,7 @@ export function shortcutFromEvent(event: KeyboardEvent): string | null {
 }
 
 export function eventShortcut(event: KeyboardEvent): string {
-  const modifiers = [
-    event.ctrlKey ? 'Ctrl' : '',
-    event.altKey ? 'Alt' : '',
-    event.shiftKey ? 'Shift' : '',
-    event.metaKey ? 'Meta' : '',
-  ].filter(Boolean);
-  const key = event.code === 'Space'
-    ? 'Space'
-    : event.key.length === 1
-      ? event.key.toLocaleUpperCase('tr-TR')
-      : event.key;
+  const { modifiers, key } = shortcutParts(event);
   return [...modifiers, key].join('+');
 }
 

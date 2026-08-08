@@ -7,6 +7,7 @@
   import './todos.css';
 
   export let todos: Todo[];
+  export let loading = false;
   export let onClose: () => void;
   export let onChange: (todos: Todo[]) => void;
 
@@ -70,11 +71,15 @@
           <span class="todo-section__divider" aria-hidden="true"></span>
           <span class="todo-section__count">{completed.length}</span>
         </header>
-        <TodoRows
-          todos={completed}
-          onChange={(updated) => updateSubset(completed, updated)}
-          emptyText={normalizedQuery ? 'Aramana uygun tamamlanan görev yok.' : 'Henüz tamamlanan görev yok.'}
-        />
+        {#if loading}
+          <div class="card-empty todo-empty" role="status">Tamamlanan görevler yükleniyor…</div>
+        {:else}
+          <TodoRows
+            todos={completed}
+            onChange={(updated) => updateSubset(completed, updated)}
+            emptyText={normalizedQuery ? 'Aramana uygun tamamlanan görev yok.' : 'Henüz tamamlanan görev yok.'}
+          />
+        {/if}
       </section>
     </div>
   </div>

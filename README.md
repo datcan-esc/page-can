@@ -52,7 +52,7 @@ Her temel bileşen kendi klasöründeki CSS dosyasından, her alan bileşeni ise
 
 ## Geliştirme
 
-Gereksinim: Node.js 20 veya üzeri.
+Gereksinim: Node.js 22 veya üzeri.
 
 ```bash
 npm install
@@ -71,6 +71,7 @@ WXT açıkken yapılan değişiklikler development paketine aktarılır. Manifes
 ## Production build
 
 ```bash
+npm test
 npm run check
 npm run build
 ```
@@ -98,11 +99,13 @@ npm run zip
 | Veri | Saklama alanı |
 | --- | --- |
 | Tema ve pomodoro tercihleri | `chrome.storage.sync` |
-| Favoriler, todo, timer ve istatistikler | `chrome.storage.local` |
+| Favoriler, aktif/tamamlanan görevler, timer ve istatistikler | `chrome.storage.local` |
 | Optimize edilmiş wallpaper | IndexedDB |
 | Tarayıcı yer imleri | Yalnızca `chrome.bookmarks` üzerinden okunur |
 
 Wallpaper cihazdan dışarı gönderilmez. Seçilen fotoğraf en fazla 3840×2160 sınırına küçültülür, WebP olarak sıkıştırılır ve yerel IndexedDB içinde saklanır.
+
+Yeni sekme açılışında yalnızca son beş yer imi, aktif görevler ve haftalık istatistik görünümü hazırlanır. Tüm yer imleri, tamamlanan görevler ve aylık istatistikler ilgili detay ekranı açıldığında yüklenir. Eski tek-listeli todo verisi ilk açılışta aktif ve tamamlanan listelere otomatik taşınır.
 
 ## Klavye kısayolları
 

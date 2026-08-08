@@ -6,19 +6,21 @@
   import Button from '../ui/Button.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
-  import Input from '../ui/Input.svelte';
   import List from '../ui/List.svelte';
   import ListItem from '../ui/ListItem.svelte';
+  import ListLimitNote from '../ui/ListLimitNote.svelte';
   import './todos.css';
 
   export let todos: Todo[];
   export let onChange: (todos: Todo[]) => void;
   export let emptyText = 'Bu listede görev yok.';
+  export let limitNote = '';
+  export let onLimitClick: (() => void) | undefined = undefined;
 
   let editingId = '';
   let editingTitle = '';
   let expandedId = '';
-  let editingInput: Input | undefined;
+  let editingInput: HTMLInputElement | undefined;
   let motionDuration = 170;
 
   onMount(() => {
@@ -40,7 +42,7 @@
   }
 
   async function beginEdit(todo: Todo) {
-    expandedId = todo.id;
+    expandedId = '';
     editingId = todo.id;
     editingTitle = todo.title;
     await tick();
@@ -56,15 +58,25 @@
     }
     editingId = '';
     editingTitle = '';
+    expandedId = '';
   }
 
   function cancelEdit() {
     editingId = '';
     editingTitle = '';
+    expandedId = '';
   }
 
   function remove(id: string) {
     onChange(todos.filter((item) => item.id !== id));
+  }
+
+  function handleEditAction(todo: Todo) {
+    if (editingId === todo.id) {
+      finishEdit();
+      return;
+    }
+    void beginEdit(todo);
   }
 </script>
 
@@ -76,9 +88,9 @@
       out:slide={{ duration: motionDuration, axis: 'y' }}
     >
       <ListItem
-        expanded={expandedId === todo.id}
+        expanded={editingId !== todo.id && expandedId === todo.id}
         muted={todo.completed}
-        class={todo.completed ? 'todo-row completed' : 'todo-row'}
+        class={`todo-row${todo.completed ? ' completed' : ''}${editingId === todo.id ? ' editing' : ''}`}
       >
         <svelte:fragment slot="leading">
           <Button
@@ -92,15 +104,17 @@
         </svelte:fragment>
 
         {#if editingId === todo.id}
-          <Input
+          <input
             bind:this={editingInput}
             class="todo-edit-input"
             bind:value={editingTitle}
-            maxLength={160}
-            multiline
-            rows={2}
+            type="text"
+            maxlength={160}
             onkeydown={(event: KeyboardEvent) => {
-              if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) finishEdit();
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                finishEdit();
+              }
               if (event.key === 'Escape') {
                 event.preventDefault();
                 cancelEdit();
@@ -122,8 +136,15 @@
         {/if}
 
         <svelte:fragment slot="actions">
-          <IconButton variant="ghost" label="Düzenle" onclick={() => beginEdit(todo)}>
-            <Icon name="edit" size={14} />
+          <IconButton
+            variant="ghost"
+            label={editingId === todo.id ? 'Kaydet' : 'Düzenle'}
+            onmousedown={(event: MouseEvent) => {
+              if (editingId === todo.id) event.preventDefault();
+            }}
+            onclick={() => handleEditAction(todo)}
+          >
+            <Icon name={editingId === todo.id ? 'check' : 'edit'} size={14} strokeWidth={editingId === todo.id ? 2.4 : 1.8} />
           </IconButton>
           <IconButton variant="ghost" label="Sil" onclick={() => remove(todo.id)}>
             <Icon name="close" size={14} />
@@ -137,4 +158,7 @@
       <p>{emptyText}</p>
     </div>
   {/each}
+  {#if limitNote && onLimitClick}
+    <ListLimitNote text={limitNote} onShowAll={onLimitClick} />
+  {/if}
 </List>

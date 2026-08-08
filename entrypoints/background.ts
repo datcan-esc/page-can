@@ -7,16 +7,25 @@ import type { PomodoroState } from '../lib/types';
 export default defineBackground(() => {
   let completionQueue = Promise.resolve();
 
+  const enqueueCompletion = (sessionId?: string) => {
+    completionQueue = completionQueue
+      .catch(() => undefined)
+      .then(() => completeSession(sessionId))
+      .catch((error) => {
+        console.error('Pomodoro tamamlanırken hata oluştu.', error);
+      });
+    return completionQueue;
+  };
+
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== POMODORO_ALARM) return;
-    completionQueue = completionQueue.then(() => completeSession());
+    void enqueueCompletion();
   });
 
   browser.runtime.onMessage.addListener((message: unknown) => {
     const parsed = message as { type?: string; sessionId?: string };
     if (parsed.type !== 'pomodoro-complete') return undefined;
-    completionQueue = completionQueue.then(() => completeSession(parsed.sessionId));
-    return completionQueue;
+    return enqueueCompletion(parsed.sessionId);
   });
 });
 

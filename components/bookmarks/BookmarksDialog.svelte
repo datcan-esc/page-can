@@ -10,6 +10,7 @@
   import './bookmarks.css';
 
   export let bookmarks: BookmarkItem[];
+  export let loading = false;
   export let onClose: () => void;
   export let onRemove: (bookmark: BookmarkItem) => void;
 
@@ -39,18 +40,23 @@
     class="bookmark-search"
     placeholder="İsim, adres veya klasör ara"
     aria-label="Yer imlerinde ara"
+    disabled={loading}
     onInput={() => (visibleCount = BOOKMARK_DIALOG_BATCH_SIZE)}
   />
 
-  <List class="expanded-list">
-    {#each visible as bookmark (bookmark.id)}
-      <BookmarkRow {bookmark} {onRemove} />
-    {:else}
-      <div class="modal-empty">Aramana uygun bir yer imi bulunamadı.</div>
-    {/each}
-  </List>
+  {#if loading}
+    <div class="modal-empty" role="status">Yer imleri yükleniyor…</div>
+  {:else}
+    <List class="expanded-list">
+      {#each visible as bookmark (bookmark.id)}
+        <BookmarkRow {bookmark} {onRemove} />
+      {:else}
+        <div class="modal-empty">Aramana uygun bir yer imi bulunamadı.</div>
+      {/each}
+    </List>
+  {/if}
 
-  {#if visibleCount < filtered.length}
+  {#if !loading && visibleCount < filtered.length}
     <Button variant="outlined" class="load-more-button" onclick={() => (visibleCount += BOOKMARK_DIALOG_BATCH_SIZE)}>
       {BOOKMARK_DIALOG_BATCH_SIZE} kayıt daha göster · {visibleCount}/{filtered.length}
     </Button>

@@ -48,5 +48,9 @@
     todos={visible}
     onChange={updateVisible}
     emptyText="Bugün için açık görev yok."
+    limitNote={activeTodos.length >= TODO_CARD_LIMIT
+      ? `${TODO_CARD_LIMIT} açık görev gösteriliyor. Daha fazlası için`
+      : ''}
+    onLimitClick={onShowAll}
   />
 </Card>

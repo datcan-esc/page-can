@@ -22,6 +22,7 @@
   let processingWallpaper = false;
   let saving = false;
   let wallpaperError = '';
+  let saveError = '';
   let wallpaperInput: HTMLInputElement;
   const themeOptions = [
     { value: 'light', label: 'Açık' },
@@ -70,10 +71,18 @@
   }
 
   async function removeCurrentWallpaper() {
-    await onRemoveWallpaper();
-    hasWallpaper = false;
-    if (draft.autoAccent) {
-      draft = { ...draft, primaryColor: DEFAULT_SETTINGS.theme.primaryColor };
+    wallpaperError = '';
+    processingWallpaper = true;
+    try {
+      await onRemoveWallpaper();
+      hasWallpaper = false;
+      if (draft.autoAccent) {
+        draft = { ...draft, primaryColor: DEFAULT_SETTINGS.theme.primaryColor };
+      }
+    } catch (error) {
+      wallpaperError = error instanceof Error ? error.message : 'Fotoğraf kaldırılamadı.';
+    } finally {
+      processingWallpaper = false;
     }
   }
 
@@ -100,10 +109,16 @@
   }
 
   async function persist() {
+    saveError = '';
     saving = true;
-    await onSave({ ...settings, theme: draft });
-    saving = false;
-    onClose();
+    try {
+      await onSave({ ...settings, theme: draft });
+      onClose();
+    } catch (error) {
+      saveError = error instanceof Error ? error.message : 'Görünüm ayarları kaydedilemedi.';
+    } finally {
+      saving = false;
+    }
   }
 </script>
 
@@ -163,7 +178,7 @@
           onchange={handleWallpaper}
           disabled={processingWallpaper}
         />
-        {#if hasWallpaper}<Button variant="outlined" onclick={removeCurrentWallpaper}>Kaldır</Button>{/if}
+        {#if hasWallpaper}<Button variant="outlined" onclick={removeCurrentWallpaper} disabled={processingWallpaper}>Kaldır</Button>{/if}
       </div>
       {#if wallpaperError}<p class="form-error">{wallpaperError}</p>{/if}
 
@@ -172,6 +187,7 @@
       <label class="field-group"><span>Konum</span><select bind:value={draft.wallpaperPosition}><option value="50% 50%">Orta</option><option value="50% 0%">Üst</option><option value="50% 100%">Alt</option><option value="0% 50%">Sol</option><option value="100% 50%">Sağ</option></select></label>
     </section>
   </div>
+  {#if saveError}<p class="form-error">{saveError}</p>{/if}
 
   <svelte:fragment slot="footer-leading">
     <Button variant="ghost" onclick={resetDefaults}>Varsayılanlar</Button>

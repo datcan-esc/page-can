@@ -1,6 +1,6 @@
 import { browser } from 'wxt/browser';
 import { BOOKMARK_CARD_LIMIT } from './display-limits';
-import type { BookmarkItem, BookmarkTreeItem } from './types';
+import type { BookmarkItem } from './types';
 
 interface RawBookmarkNode {
   id: string;
@@ -10,37 +10,39 @@ interface RawBookmarkNode {
   children?: RawBookmarkNode[];
 }
 
-export async function loadBookmarkData(): Promise<{
-  recent: BookmarkItem[];
-  tree: BookmarkTreeItem[];
-  flat: BookmarkItem[];
-}> {
+function toBookmarkItem(node: RawBookmarkNode, path = ''): BookmarkItem | null {
+  if (!node.url) return null;
+  return {
+    id: node.id,
+    title: node.title || node.url,
+    url: node.url,
+    dateAdded: node.dateAdded ?? 0,
+    path,
+  };
+}
+
+export async function loadRecentBookmarks(): Promise<BookmarkItem[]> {
+  const nodes = await browser.bookmarks.getRecent(BOOKMARK_CARD_LIMIT) as RawBookmarkNode[];
+  return nodes
+    .map((node) => toBookmarkItem(node))
+    .filter((item): item is BookmarkItem => item !== null);
+}
+
+export async function loadAllBookmarks(): Promise<BookmarkItem[]> {
   const roots = await browser.bookmarks.getTree() as RawBookmarkNode[];
   const flat: BookmarkItem[] = [];
 
   const walk = (nodes: RawBookmarkNode[], path: string[]) => {
     for (const node of nodes) {
       const nextPath = node.title ? [...path, node.title] : path;
-      if (node.url) {
-        flat.push({
-          id: node.id,
-          title: node.title || node.url,
-          url: node.url,
-          dateAdded: node.dateAdded ?? 0,
-          path: path.filter(Boolean).join(' / '),
-        });
-      }
+      const item = toBookmarkItem(node, path.filter(Boolean).join(' / '));
+      if (item) flat.push(item);
       if (node.children) walk(node.children, nextPath);
     }
   };
 
   walk(roots, []);
-  const recent = [...flat]
-    .sort((left, right) => right.dateAdded - left.dateAdded)
-    .slice(0, BOOKMARK_CARD_LIMIT);
-
-  const tree = (roots[0]?.children ?? []) as BookmarkTreeItem[];
-  return { recent, tree, flat };
+  return flat;
 }
 
 export async function removeBookmark(id: string): Promise<void> {
