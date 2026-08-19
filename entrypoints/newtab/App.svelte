@@ -7,6 +7,8 @@
   import FavoriteGrid from '../../components/favorites/FavoriteGrid.svelte';
   import FocusCard from '../../components/focus/FocusCard.svelte';
   import FocusSettingsDialog from '../../components/focus/FocusSettingsDialog.svelte';
+  import MediaPlayer from '../../components/media/MediaPlayer.svelte';
+  import MediaSettingsDialog from '../../components/media/MediaSettingsDialog.svelte';
   import AppearanceDialog from '../../components/settings/AppearanceDialog.svelte';
   import ClockCard from '../../components/shell/ClockCard.svelte';
   import StatsCard from '../../components/stats/StatsCard.svelte';
@@ -42,6 +44,7 @@
     BookmarkItem,
     DailyStat,
     Favorite,
+    MediaPreferences,
     PomodoroPreferences,
     PomodoroState,
     Todo,
@@ -58,7 +61,7 @@
   export let initialSettings: AppSettings;
   export let initialError = '';
 
-  type DialogName = 'appearance' | 'favorite' | 'bookmarks' | 'todos' | 'pomodoro' | 'stats';
+  type DialogName = 'appearance' | 'favorite' | 'bookmarks' | 'todos' | 'pomodoro' | 'media' | 'stats';
 
   let settings = initialSettings;
   let favorites: Favorite[] = [];
@@ -229,6 +232,10 @@
 
   async function updatePomodoroPreferences(pomodoro: PomodoroPreferences) {
     await updateSettings({ ...settings, pomodoro });
+  }
+
+  async function updateMediaPreferences(media: MediaPreferences) {
+    await updateSettings({ ...settings, media });
   }
 
   async function updateWallpaper(file: File) {
@@ -516,6 +523,10 @@
       </div>
 
       <div class="dashboard-column dashboard-column--right">
+        <MediaPlayer
+          shortcut={settings.media.shortcut}
+          onOpenSettings={() => (activeDialog = 'media')}
+        />
         <TodoCard
           todos={activeTodos}
           onChange={(next) => {
@@ -556,7 +567,7 @@
   <FavoriteDialog
     favorite={editingFavorite}
     {favorites}
-    reservedShortcut={settings.pomodoro.shortcut}
+    reservedShortcuts={[settings.pomodoro.shortcut, settings.media.shortcut].filter(Boolean)}
     onClose={() => (activeDialog = null)}
     onSave={saveFavorite}
   />
@@ -588,8 +599,21 @@
   <FocusSettingsDialog
     preferences={settings.pomodoro}
     favoriteShortcuts={favorites.map((favorite) => favorite.shortcut).filter(Boolean)}
+    reservedShortcuts={[settings.media.shortcut].filter(Boolean)}
     onClose={() => (activeDialog = null)}
     onSave={updatePomodoroPreferences}
+  />
+{/if}
+
+{#if activeDialog === 'media'}
+  <MediaSettingsDialog
+    preferences={settings.media}
+    reservedShortcuts={[
+      settings.pomodoro.shortcut,
+      ...favorites.map((favorite) => favorite.shortcut),
+    ].filter(Boolean)}
+    onClose={() => (activeDialog = null)}
+    onSave={updateMediaPreferences}
   />
 {/if}
 

@@ -8,7 +8,7 @@
 
   export let favorite: Favorite | null = null;
   export let favorites: Favorite[] = [];
-  export let reservedShortcut = '';
+  export let reservedShortcuts: string[] = [];
   export let onClose: () => void;
   export let onSave: (favorite: Favorite) => Promise<void>;
 
@@ -35,7 +35,7 @@
 
     const conflict = shortcut && favorites.some((item) =>
       item.id !== favorite?.id && item.shortcut === shortcut);
-    if (conflict || (shortcut && shortcut === reservedShortcut)) {
+    if (conflict || (shortcut && reservedShortcuts.includes(shortcut))) {
       error = 'Bu klavye kısayolu zaten kullanılıyor.';
       return;
     }

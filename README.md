@@ -15,6 +15,7 @@
 - Kart opaklığı ve blur ayarı
 - Yerel fotoğraf seçme, WebP optimizasyonu, otomatik vurgu rengi, karartma, blur ve konum ayarları
 - Masaüstü odaklı ve klavye erişilebilir arayüz
+- YouTube ve YouTube Music için kapak, takip edilebilir süre, temel oynatma denetimleri ve atanabilir kısayol
 
 ## Teknoloji
 
@@ -66,7 +67,7 @@ Ardından Chromium tabanlı tarayıcıda:
 3. **Paketlenmemiş öğe yükle / Load unpacked** düğmesine basın.
 4. Projedeki `.output/chrome-mv3-dev` klasörünü seçin.
 
-WXT açıkken yapılan değişiklikler development paketine aktarılır. Manifest veya izin değişikliklerinden sonra uzantılar ekranındaki yenile düğmesini kullanın.
+WXT açıkken yapılan değişiklikler development paketine aktarılır. Manifest veya izin değişikliklerinden sonra uzantılar ekranındaki yenile düğmesini kullanın. Uzantı ilk kez yüklendiyse ya da yeniden yüklendiyse, önceden açık YouTube / YouTube Music sekmelerini de bir kez yenileyin; Chromium bildirime dayalı içerik betiklerini mevcut sayfaya geriye dönük olarak eklemez.
 
 ## Production build
 
@@ -98,7 +99,7 @@ npm run zip
 
 | Veri | Saklama alanı |
 | --- | --- |
-| Tema ve pomodoro tercihleri | `chrome.storage.sync` |
+| Tema, pomodoro ve medya kısayolu | `chrome.storage.sync` |
 | Favoriler, aktif/tamamlanan görevler, timer ve istatistikler | `chrome.storage.local` |
 | Optimize edilmiş wallpaper | IndexedDB |
 | Tarayıcı yer imleri | Yalnızca `chrome.bookmarks` üzerinden okunur |
@@ -109,9 +110,9 @@ Yeni sekme açılışında yalnızca son beş yer imi, aktif görevler ve haftal
 
 ## Klavye kısayolları
 
-Favori ve odak zamanlayıcısı kısayolları yeni sekme sayfası açık ve odaktayken çalışır. Yazı alanları, kontroller veya tarayıcının adres çubuğu odaktayken devreye girmez. Dinamik sayıda favoriye izin vermek için Chromium'un manifestte önceden tanımlanan global `commands` sistemi kullanılmaz.
+Favori, odak zamanlayıcısı ve medya kısayolları yeni sekme sayfası açık ve odaktayken çalışır. Yazı alanları, kontroller veya tarayıcının adres çubuğu odaktayken devreye girmez. Dinamik sayıda favoriye izin vermek için Chromium'un manifestte önceden tanımlanan global `commands` sistemi kullanılmaz.
 
-Tek harf, Space, F1–F12 veya Alt, Ctrl, Shift ve Meta içeren bir kombinasyon kullanılabilir. Aynı kısayol iki favoriye veya hem favoriye hem odak zamanlayıcısına atanamaz.
+Tek harf, Space, F1–F12 veya Alt, Ctrl, Shift ve Meta içeren bir kombinasyon kullanılabilir. Aynı kısayol favori, odak zamanlayıcısı ve medya denetimi arasında tekrar kullanılamaz.
 
 ## İzinler
 
@@ -120,5 +121,6 @@ Tek harf, Space, F1–F12 veya Alt, Ctrl, Shift ve Meta içeren bir kombinasyon 
 - `alarms`: kapalı yeni sekmede pomodoro bitişini takip etmek için
 - `notifications`: seans bitiş bildirimleri için
 - `favicon`: favori ve yer imi ikonlarını yerel tarayıcı favicon servisiyle göstermek için
+- `scripting`: YouTube medya içerik bağlantısı kaybolduğunda yalnızca izinli YouTube sekmesine yeniden bağlanmak için
 
-Uzantı herhangi bir web sitesi için host izni istemez.
+Medya denetimi içerik betiği yalnızca `www.youtube.com` ve `music.youtube.com` sayfalarında çalışır. Uzantı diğer web sitelerine erişim istemez.

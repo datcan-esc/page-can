@@ -25,9 +25,14 @@ export interface PomodoroPreferences {
   shortcut: string;
 }
 
+export interface MediaPreferences {
+  shortcut: string;
+}
+
 export interface AppSettings {
   theme: ThemePreferences;
   pomodoro: PomodoroPreferences;
+  media: MediaPreferences;
 }
 
 export interface Favorite {

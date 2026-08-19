@@ -21,6 +21,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     focusMinutes: 25,
     shortcut: 'Space',
   },
+  media: {
+    shortcut: '',
+  },
 };
 
 export const DEFAULT_TIMER: PomodoroState = {

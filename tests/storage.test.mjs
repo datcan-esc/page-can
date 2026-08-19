@@ -91,6 +91,7 @@ test('storage sınırları ve todo migration', async (t) => {
       assert.equal(settings.theme.primaryColor, '#5e5ce6');
       assert.equal(settings.pomodoro.focusMinutes, 25);
       assert.equal(settings.pomodoro.shortcut, 'Space');
+      assert.equal(settings.media.shortcut, '');
     } finally {
       await harness.close();
     }

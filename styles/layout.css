@@ -67,7 +67,9 @@
 }
 
 .dashboard-column--right {
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows:
+    calc(90px + var(--card-padding) + var(--card-padding))
+    minmax(0, 1fr);
 }
 
 .app-loading {

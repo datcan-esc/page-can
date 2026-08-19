@@ -40,6 +40,7 @@ export function normalizeSettings(value: unknown): AppSettings {
   const stored = isRecord(value) ? value : {};
   const theme = isRecord(stored.theme) ? stored.theme : {};
   const pomodoro = isRecord(stored.pomodoro) ? stored.pomodoro : {};
+  const media = isRecord(stored.media) ? stored.media : {};
   const mode = theme.mode === 'light' || theme.mode === 'dark' || theme.mode === 'system'
     ? theme.mode
     : DEFAULT_SETTINGS.theme.mode;
@@ -82,6 +83,9 @@ export function normalizeSettings(value: unknown): AppSettings {
         240,
       )),
       shortcut: stringValue(pomodoro.shortcut, DEFAULT_SETTINGS.pomodoro.shortcut).slice(0, 64),
+    },
+    media: {
+      shortcut: stringValue(media.shortcut, DEFAULT_SETTINGS.media.shortcut).slice(0, 64),
     },
   };
 }

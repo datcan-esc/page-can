@@ -8,6 +8,7 @@
 
   export let preferences: PomodoroPreferences;
   export let favoriteShortcuts: string[] = [];
+  export let reservedShortcuts: string[] = [];
   export let onClose: () => void;
   export let onSave: (preferences: PomodoroPreferences) => Promise<void>;
 
@@ -22,8 +23,8 @@
       error = 'Odak süresi 1 ile 240 dakika arasında olmalı.';
       return;
     }
-    if (draft.shortcut && favoriteShortcuts.includes(draft.shortcut)) {
-      error = 'Bu kısayol bir favoride kullanılıyor.';
+    if (draft.shortcut && [...favoriteShortcuts, ...reservedShortcuts].includes(draft.shortcut)) {
+      error = 'Bu klavye kısayolu zaten kullanılıyor.';
       return;
     }
 
