@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-  export type InputType = 'text' | 'search' | 'url' | 'email' | 'password' | 'number';
+  export type InputType = 'text' | 'search' | 'url' | 'email' | 'password' | 'number' | 'datetime-local';
 </script>
 
 <script lang="ts">

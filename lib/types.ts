@@ -2,6 +2,20 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export type BorderMode = 'auto' | 'custom';
 export type PomodoroMode = 'focus' | 'stopwatch';
 export type TimerStatus = 'idle' | 'running' | 'paused';
+export type TimerPauseReason = 'offline' | 'idle' | 'locked' | 'checkin';
+
+export interface FocusInterval {
+  startAt: number;
+  endAt: number;
+}
+
+export interface TimerRecovery {
+  reason: TimerPauseReason;
+  segmentStartAt: number;
+  recordedEndAt: number;
+  detectedAt: number;
+  excludedSec: number;
+}
 
 export interface ThemePreferences {
   mode: ThemeMode;
@@ -23,6 +37,8 @@ export interface ThemePreferences {
 export interface PomodoroPreferences {
   focusMinutes: number;
   shortcut: string;
+  idleMinutes: number;
+  checkInMinutes: number;
 }
 
 export interface MediaPreferences {
@@ -60,6 +76,11 @@ export interface PomodoroState {
   startedAt?: number;
   endsAt?: number;
   sessionId?: string;
+  lastHeartbeatAt?: number;
+  checkInAt?: number;
+  checkInPromptedAt?: number;
+  segments?: FocusInterval[];
+  recovery?: TimerRecovery;
 }
 
 export interface DailyStat {

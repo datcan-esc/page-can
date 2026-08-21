@@ -21,6 +21,13 @@
   padding: 4px 12px;
 }
 
+.timer-stage--with-recovery {
+  min-height: 86px;
+  flex: 0 1 auto;
+  gap: 10px;
+  padding-block: 0 4px;
+}
+
 .timer-readout {
   display: flex;
   flex-direction: column;
@@ -78,6 +85,74 @@
 
 .timer-spacer {
   width: 36px;
+}
+
+.timer-recovery {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+  padding: 11px 12px;
+  background: color-mix(in srgb, var(--primary) 9%, var(--surface-soft));
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--separator));
+  border-radius: var(--radius-control);
+}
+
+.timer-recovery > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.timer-recovery strong {
+  color: var(--text);
+  font-size: var(--type-title);
+  font-weight: var(--weight-title);
+}
+
+.timer-recovery p,
+.timer-dialog-copy {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1.4;
+}
+
+.timer-recovery__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-recovery__actions > button:not(.button) {
+  min-height: 28px;
+  padding: 0 5px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--type-body);
+  font-weight: var(--weight-title);
+}
+
+.timer-recovery__actions > button:not(.button):hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.timer-message {
+  width: 100%;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.timer-feedback {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1.35;
 }
 
 @media (max-height: 760px) {

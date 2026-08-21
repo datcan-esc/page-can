@@ -91,7 +91,28 @@ test('storage sınırları ve todo migration', async (t) => {
       assert.equal(settings.theme.primaryColor, '#5e5ce6');
       assert.equal(settings.pomodoro.focusMinutes, 25);
       assert.equal(settings.pomodoro.shortcut, 'Space');
+      assert.equal(settings.pomodoro.idleMinutes, 15);
+      assert.equal(settings.pomodoro.checkInMinutes, 60);
       assert.equal(settings.media.shortcut, '');
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('sayaç güvenlik ayarlarını sınırlar ve 0 ile kapatmaya izin verir', async () => {
+    const harness = await createStorageHarness();
+    try {
+      const limited = harness.storage.normalizeSettings({
+        pomodoro: { idleMinutes: 99, checkInMinutes: 4 },
+      });
+      assert.equal(limited.pomodoro.idleMinutes, 60);
+      assert.equal(limited.pomodoro.checkInMinutes, 15);
+
+      const disabled = harness.storage.normalizeSettings({
+        pomodoro: { idleMinutes: 0, checkInMinutes: 0 },
+      });
+      assert.equal(disabled.pomodoro.idleMinutes, 0);
+      assert.equal(disabled.pomodoro.checkInMinutes, 0);
     } finally {
       await harness.close();
     }

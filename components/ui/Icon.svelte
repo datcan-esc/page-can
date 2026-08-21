@@ -26,7 +26,9 @@
     SkipForward,
     SlidersHorizontal,
     Sparkles,
+    Square,
     Timer,
+    Trash2,
     X,
   } from '@lucide/svelte';
 
@@ -43,6 +45,7 @@
     'arrow-up': ArrowUp,
     play: Play,
     pause: Pause,
+    stop: Square,
     reset: RotateCcw,
     check: Check,
     'check-circle': CircleCheckBig,
@@ -61,6 +64,7 @@
     grid: LayoutGrid,
     chart: ChartNoAxesColumnIncreasing,
     sparkles: Sparkles,
+    trash: Trash2,
     music: Music2,
     previous: SkipBack,
     next: SkipForward,

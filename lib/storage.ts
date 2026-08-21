@@ -1,6 +1,14 @@
 import { browser } from 'wxt/browser';
 import { DEFAULT_SETTINGS, DEFAULT_TIMER } from './defaults';
-import type { AppSettings, DailyStat, Favorite, PomodoroState, Todo } from './types';
+import type {
+  AppSettings,
+  DailyStat,
+  Favorite,
+  FocusInterval,
+  PomodoroState,
+  TimerRecovery,
+  Todo,
+} from './types';
 import { localDateKey, normalizeUrl } from './utils';
 
 const SYNC_SETTINGS_KEY = 'settings';
@@ -48,6 +56,18 @@ export function normalizeSettings(value: unknown): AppSettings {
     ? theme.borderMode
     : DEFAULT_SETTINGS.theme.borderMode;
   const wallpaperPosition = stringValue(theme.wallpaperPosition, '');
+  const idleMinutes = Math.round(finiteNumber(
+    pomodoro.idleMinutes,
+    DEFAULT_SETTINGS.pomodoro.idleMinutes,
+    0,
+    60,
+  ));
+  const checkInMinutes = Math.round(finiteNumber(
+    pomodoro.checkInMinutes,
+    DEFAULT_SETTINGS.pomodoro.checkInMinutes,
+    0,
+    240,
+  ));
 
   return {
     theme: {
@@ -83,6 +103,8 @@ export function normalizeSettings(value: unknown): AppSettings {
         240,
       )),
       shortcut: stringValue(pomodoro.shortcut, DEFAULT_SETTINGS.pomodoro.shortcut).slice(0, 64),
+      idleMinutes,
+      checkInMinutes: checkInMinutes > 0 ? Math.max(15, checkInMinutes) : 0,
     },
     media: {
       shortcut: stringValue(media.shortcut, DEFAULT_SETTINGS.media.shortcut).slice(0, 64),
@@ -157,6 +179,49 @@ function normalizeTimer(value: unknown): PomodoroState {
     ? Math.max(0, value.endsAt)
     : undefined;
   const sessionId = typeof value.sessionId === 'string' && value.sessionId ? value.sessionId : undefined;
+  const lastHeartbeatAt = typeof value.lastHeartbeatAt === 'number' && Number.isFinite(value.lastHeartbeatAt)
+    ? Math.max(0, value.lastHeartbeatAt)
+    : undefined;
+  const checkInAt = typeof value.checkInAt === 'number' && Number.isFinite(value.checkInAt)
+    ? Math.max(0, value.checkInAt)
+    : undefined;
+  const checkInPromptedAt = typeof value.checkInPromptedAt === 'number'
+    && Number.isFinite(value.checkInPromptedAt)
+    ? Math.max(0, value.checkInPromptedAt)
+    : undefined;
+  const segments: FocusInterval[] = Array.isArray(value.segments)
+    ? value.segments.flatMap((candidate) => {
+      if (!isRecord(candidate)) return [];
+      const startAt = finiteNumber(candidate.startAt, -1, 0);
+      const endAt = finiteNumber(candidate.endAt, -1, 0);
+      return startAt >= 0 && endAt > startAt ? [{ startAt, endAt }] : [];
+    }).slice(-128)
+    : [];
+  let recovery: TimerRecovery | undefined;
+  if (isRecord(value.recovery)) {
+    const reason = value.recovery.reason;
+    const segmentStartAt = finiteNumber(value.recovery.segmentStartAt, -1, 0);
+    const recordedEndAt = finiteNumber(value.recovery.recordedEndAt, -1, 0);
+    const detectedAt = finiteNumber(value.recovery.detectedAt, -1, 0);
+    if (
+      (reason === 'offline' || reason === 'idle' || reason === 'locked' || reason === 'checkin')
+      && segmentStartAt >= 0
+      && recordedEndAt >= segmentStartAt
+      && detectedAt >= recordedEndAt
+    ) {
+      recovery = {
+        reason,
+        segmentStartAt,
+        recordedEndAt,
+        detectedAt,
+        excludedSec: Math.round(finiteNumber(
+          value.recovery.excludedSec,
+          Math.floor((detectedAt - recordedEndAt) / 1000),
+          0,
+        )),
+      };
+    }
+  }
   if (status === 'running' && (!startedAt || (mode === 'focus' && (!endsAt || !sessionId)))) {
     status = 'paused';
   }
@@ -171,6 +236,11 @@ function normalizeTimer(value: unknown): PomodoroState {
   if (startedAt !== undefined) timer.startedAt = startedAt;
   if (endsAt !== undefined) timer.endsAt = endsAt;
   if (sessionId !== undefined) timer.sessionId = sessionId;
+  if (lastHeartbeatAt !== undefined) timer.lastHeartbeatAt = lastHeartbeatAt;
+  if (checkInAt !== undefined) timer.checkInAt = checkInAt;
+  if (checkInPromptedAt !== undefined) timer.checkInPromptedAt = checkInPromptedAt;
+  if (segments.length) timer.segments = segments;
+  if (recovery) timer.recovery = recovery;
   return timer;
 }
 

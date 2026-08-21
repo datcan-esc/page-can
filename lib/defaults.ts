@@ -20,6 +20,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pomodoro: {
     focusMinutes: 25,
     shortcut: 'Space',
+    idleMinutes: 15,
+    checkInMinutes: 60,
   },
   media: {
     shortcut: '',

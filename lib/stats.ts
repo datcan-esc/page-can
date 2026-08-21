@@ -1,4 +1,5 @@
-import type { DailyStat, PomodoroState } from './types';
+import type { DailyStat, FocusInterval, PomodoroState } from './types';
+import { safeStopwatchEnd } from './pomodoro-safety';
 import { loadStats, saveStats } from './storage';
 import { localDateKey } from './utils';
 
@@ -65,6 +66,45 @@ function addIntervalToStats(
   return next;
 }
 
+function removeIntervalFromStats(
+  stats: DailyStat[],
+  startMs: number,
+  endMs: number,
+): DailyStat[] {
+  const next = cloneStats(stats);
+  const byDate = new Map(next.map((item) => [item.date, item]));
+  const safeStart = Math.max(0, startMs);
+  const safeEnd = Math.max(safeStart, endMs);
+  let cursor = safeStart;
+
+  while (cursor < safeEnd) {
+    const cursorDate = new Date(cursor);
+    const nextMidnight = new Date(cursorDate);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const sliceEnd = Math.min(safeEnd, nextMidnight.getTime());
+    const seconds = Math.floor((sliceEnd - cursor) / 1000);
+    const item = byDate.get(localDateKey(cursorDate));
+    if (item && seconds > 0) item.focusSeconds = Math.max(0, item.focusSeconds - seconds);
+    cursor = sliceEnd;
+  }
+
+  return next.filter((item) => item.focusSeconds > 0 || item.completedSessions > 0);
+}
+
+async function updateFocusIntervals(
+  removals: FocusInterval[],
+  additions: FocusInterval[],
+): Promise<void> {
+  let updated = await loadStats();
+  for (const interval of removals) {
+    updated = removeIntervalFromStats(updated, interval.startAt, interval.endAt);
+  }
+  for (const interval of additions) {
+    updated = addIntervalToStats(updated, interval.startAt, interval.endAt);
+  }
+  await saveStats(updated);
+}
+
 export async function recordFocusInterval(
   startMs: number,
   endMs: number,
@@ -75,6 +115,33 @@ export async function recordFocusInterval(
   await saveStats(updated);
 }
 
+export async function removeFocusIntervals(intervals: FocusInterval[]): Promise<void> {
+  if (!intervals.length) return;
+  await updateFocusIntervals(intervals, []);
+}
+
+export async function replaceFocusInterval(
+  previous: FocusInterval | undefined,
+  next: FocusInterval | undefined,
+): Promise<void> {
+  await updateFocusIntervals(previous ? [previous] : [], next ? [next] : []);
+}
+
+export async function setDailyFocusSeconds(date: string, focusSeconds: number): Promise<void> {
+  const stats = await loadStats();
+  const safeSeconds = Math.max(0, Math.round(focusSeconds));
+  const existing = stats.find((item) => item.date === date);
+  let updated: DailyStat[];
+  if (existing) {
+    updated = stats.map((item) => item.date === date
+      ? { ...item, focusSeconds: safeSeconds }
+      : item);
+  } else {
+    updated = [...stats, { date, focusSeconds: safeSeconds, completedSessions: 0 }];
+  }
+  await saveStats(updated.filter((item) => item.focusSeconds > 0 || item.completedSessions > 0));
+}
+
 export function withLiveFocus(
   stats: DailyStat[],
   timer: PomodoroState,
@@ -83,7 +150,7 @@ export function withLiveFocus(
   if (timer.status !== 'running' || !timer.startedAt) return stats;
   const end = timer.mode === 'focus' && timer.endsAt
     ? Math.min(now, timer.endsAt)
-    : now;
+    : timer.mode === 'stopwatch' ? safeStopwatchEnd(timer, now) : now;
   return addIntervalToStats(stats, timer.startedAt, end);
 }
 

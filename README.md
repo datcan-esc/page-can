@@ -8,7 +8,11 @@
 - Son beş yer imini sabit satır ritminde gösteren liste ve aranabilir tam yer imi görünümü
 - Ayarlanabilir geri sayım ve sınırsız sayaç modlarına sahip odak zamanlayıcısı
 - Tarayıcı kapansa veya yeni sekme kapanmış olsa da geri sayımı sürdüren alarm/bildirim sistemi
+- Sınırsız sayaç için kapanma, uyku, ekran kilidi ve ayarlanabilir hareketsizlik koruması
+- Uzun sayaç oturumlarında ayarlanabilir “Hâlâ odakta mısın?” kontrolü ve otomatik duraklatma
+- Otomatik duraklatılan oturumun bitiş saatini düzeltme, devam ettirme veya kaydetmeden silme
 - Haftanın en yüksek gününe göre saat çizgileri üreten, gerçek geçen süreyi kaydeden haftalık ve aylık odak istatistikleri
+- Aylık görünümden hatalı günlük odak toplamını düzenleme veya silme
 - Yapılacaklar ve tamamlananlar görünümleri, inline düzenleme ve tam liste ekranı
 - Açık, koyu ve sistem teması
 - Vurgu, yüksek kontrastlı secondary metin, kart ve isteğe bağlı border rengi
@@ -120,6 +124,7 @@ Tek harf, Space, F1–F12 veya Alt, Ctrl, Shift ve Meta içeren bir kombinasyon 
 - `bookmarks`: yer imlerini listelemek için
 - `alarms`: kapalı yeni sekmede pomodoro bitişini takip etmek için
 - `notifications`: seans bitiş bildirimleri için
+- `idle`: yalnızca cihazın aktif, hareketsiz veya kilitli durumunu görüp açık unutulan sayacı duraklatmak için
 - `favicon`: favori ve yer imi ikonlarını yerel tarayıcı favicon servisiyle göstermek için
 - `scripting`: YouTube medya içerik bağlantısı kaybolduğunda yalnızca izinli YouTube sekmesine yeniden bağlanmak için
 

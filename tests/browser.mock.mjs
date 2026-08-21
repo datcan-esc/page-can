@@ -25,7 +25,33 @@ function area(name) {
 }
 
 export const browser = {
-  runtime: { getURL: (path) => path },
+  runtime: {
+    getURL: (path) => path,
+    async sendMessage(message) {
+      const state = globalThis.__pageCanStorageTestState;
+      state.sentMessages ??= [];
+      state.sentMessages.push(clone(message));
+    },
+  },
+  alarms: {
+    async clear(name) {
+      const state = globalThis.__pageCanStorageTestState;
+      state.alarms ??= {};
+      const existed = Object.hasOwn(state.alarms, name);
+      delete state.alarms[name];
+      return existed;
+    },
+    async create(name, info) {
+      const state = globalThis.__pageCanStorageTestState;
+      state.alarms ??= {};
+      state.alarms[name] = clone(info);
+    },
+  },
+  notifications: {
+    async clear() {
+      return true;
+    },
+  },
   bookmarks: {
     async getRecent(numberOfItems) {
       const state = globalThis.__pageCanStorageTestState;

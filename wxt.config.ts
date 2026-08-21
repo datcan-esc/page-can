@@ -11,6 +11,7 @@ export default defineConfig({
       'bookmarks',
       'alarms',
       'notifications',
+      'idle',
       'favicon',
       'scripting',
     ],

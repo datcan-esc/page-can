@@ -23,6 +23,21 @@
       error = 'Odak süresi 1 ile 240 dakika arasında olmalı.';
       return;
     }
+    const idleMinutes = Number(draft.idleMinutes);
+    if (!Number.isFinite(idleMinutes) || idleMinutes < 0 || idleMinutes > 60) {
+      error = 'Hareketsizlik süresi 0 ile 60 dakika arasında olmalı.';
+      return;
+    }
+    const checkInMinutes = Number(draft.checkInMinutes);
+    if (
+      !Number.isFinite(checkInMinutes)
+      || checkInMinutes < 0
+      || checkInMinutes > 240
+      || (checkInMinutes > 0 && checkInMinutes < 15)
+    ) {
+      error = 'Sayaç kontrolü 0 veya 15 ile 240 dakika arasında olmalı.';
+      return;
+    }
     if (draft.shortcut && [...favoriteShortcuts, ...reservedShortcuts].includes(draft.shortcut)) {
       error = 'Bu klavye kısayolu zaten kullanılıyor.';
       return;
@@ -30,7 +45,12 @@
 
     saving = true;
     try {
-      await onSave({ ...draft, focusMinutes: Math.round(focusMinutes) });
+      await onSave({
+        ...draft,
+        focusMinutes: Math.round(focusMinutes),
+        idleMinutes: Math.round(idleMinutes),
+        checkInMinutes: Math.round(checkInMinutes),
+      });
       onClose();
     } catch (saveError) {
       error = saveError instanceof Error ? saveError.message : 'Odak ayarları kaydedilemedi.';
@@ -42,7 +62,7 @@
 
 <Dialog
   title="Odak ayarları"
-  subtitle="Süre ve klavye kısayolu"
+  subtitle="Süre, güvenlik ve klavye kısayolu"
   {onClose}
   onCancel={onClose}
   formId="focus-settings-form"
@@ -58,6 +78,28 @@
       required
       suffix="dakika"
       label="Geri sayım süresi"
+    />
+
+    <Input
+      bind:value={draft.idleMinutes}
+      type="number"
+      min={0}
+      max={60}
+      required
+      suffix="dakika"
+      label="Hareketsizlikte duraklat"
+      description="Bu süre boyunca etkinlik olmazsa duraklatır. 0 hareketsizlik kontrolünü kapatır; ekran kilidi her zaman duraklatır."
+    />
+
+    <Input
+      bind:value={draft.checkInMinutes}
+      type="number"
+      min={0}
+      max={240}
+      required
+      suffix="dakika"
+      label="Sayaç kontrolü"
+      description="Sayaç açık kalırsa hâlâ odakta olup olmadığınızı sorar. En az 15 dakika; 0 kapatır."
     />
 
     <ShortcutField

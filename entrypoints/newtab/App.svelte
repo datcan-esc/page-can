@@ -19,7 +19,13 @@
   import IconButton from '../../components/ui/IconButton.svelte';
   import { loadAllBookmarks, loadRecentBookmarks, removeBookmark } from '../../lib/bookmarks';
   import { DEFAULT_TIMER } from '../../lib/defaults';
-  import { durationForMode, requestCompletion, toggleTimer } from '../../lib/pomodoro';
+  import {
+    durationForMode,
+    requestCompletion,
+    requestTimerReconciliation,
+    toggleTimer,
+  } from '../../lib/pomodoro';
+  import { setDailyFocusSeconds } from '../../lib/stats';
   import {
     loadActiveTodos,
     loadCompletedTodos,
@@ -329,6 +335,13 @@
     }
   }
 
+  async function updateStatsDay(date: string, focusSeconds: number) {
+    await setDailyFocusSeconds(date, focusSeconds);
+    const stats = await loadStats();
+    weeklyStats = statsInRange(stats, localWeekRange());
+    if (monthlyStatsLoaded) monthlyStats = statsInRange(stats, localMonthRange());
+  }
+
   function closeStatsDialog() {
     statsLoadVersion += 1;
     statsLoading = false;
@@ -427,6 +440,7 @@
 
   onMount(() => {
     const initialize = async () => {
+      await requestTimerReconciliation().catch(() => undefined);
       const results = await Promise.allSettled([
         loadFavorites(),
         loadActiveTodos(),
@@ -618,5 +632,11 @@
 {/if}
 
 {#if activeDialog === 'stats'}
-  <StatsDetailDialog stats={monthlyStats} {timer} loading={statsLoading} onClose={closeStatsDialog} />
+  <StatsDetailDialog
+    stats={monthlyStats}
+    {timer}
+    loading={statsLoading}
+    onClose={closeStatsDialog}
+    onUpdateDay={updateStatsDay}
+  />
 {/if}
