@@ -18,8 +18,9 @@
   box-shadow:
     inset 0 1px rgb(255 255 255 / 2.5%),
     0 14px 38px rgb(0 0 0 / 12%);
-  backdrop-filter: blur(var(--card-blur)) saturate(1.02);
+  /* Keep the prefixed declaration first so CSS minification preserves both forms. */
   -webkit-backdrop-filter: blur(var(--card-blur)) saturate(1.02);
+  backdrop-filter: blur(var(--card-blur)) saturate(1.02);
 }
 
 .card__header {
