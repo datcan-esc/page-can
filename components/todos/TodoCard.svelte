@@ -9,6 +9,9 @@
   import './todos.css';
 
   export let todos: Todo[];
+  export let shortcut = '';
+  export let showShortcutHints = false;
+  export let focusRequest = 0;
   export let onChange: (todos: Todo[]) => void;
   export let onShowAll: () => void;
 
@@ -43,7 +46,12 @@
     <Button variant="ghost" size="sm" onclick={onShowAll}>Tümü</Button>
   </svelte:fragment>
 
-  <TodoComposer onAdd={addTodo} />
+  <TodoComposer
+    onAdd={addTodo}
+    {shortcut}
+    {showShortcutHints}
+    {focusRequest}
+  />
   <TodoRows
     todos={visible}
     onChange={updateVisible}

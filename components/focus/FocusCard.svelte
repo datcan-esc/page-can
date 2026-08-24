@@ -20,11 +20,13 @@
   import IconButton from '../ui/IconButton.svelte';
   import Input from '../ui/Input.svelte';
   import SegmentedToggle from '../ui/SegmentedToggle.svelte';
+  import ShortcutHint from '../ui/ShortcutHint.svelte';
   import '../ui/form.css';
   import './focus.css';
 
   export let timer: PomodoroState;
   export let settings: AppSettings;
+  export let showShortcutHints = false;
   export let onTimerChange: (timer: PomodoroState) => void;
   export let onOpenSettings: () => void;
 
@@ -277,7 +279,14 @@
         <p>{recoveryMessage}</p>
       </div>
       <div class="timer-recovery__actions">
-        <Button size="sm" disabled={working} onclick={handleToggle}>Devam et</Button>
+        <span class="timer-shortcut-target timer-recovery__resume">
+          <Button size="sm" disabled={working} onclick={handleToggle}>Devam et</Button>
+          <ShortcutHint
+            shortcut={settings.pomodoro.shortcut}
+            visible={showShortcutHints}
+            class="focus-shortcut-hint"
+          />
+        </span>
         <Button size="sm" variant="outlined" disabled={working} onclick={handleFinish}>Bitir</Button>
         <button type="button" disabled={working} onclick={openRecoveryEditor}>Bitişi düzelt</button>
         <button type="button" disabled={working} onclick={() => (activeTimerDialog = 'discard')}>Oturumu sil</button>
@@ -286,9 +295,16 @@
   {:else if timer.mode === 'stopwatch'}
     <div class="timer-actions">
       {#if timer.status === 'running'}
-        <IconButton label="Duraklat" variant="ghost" disabled={working} onclick={handleToggle}>
-          <Icon name="pause" size={16} />
-        </IconButton>
+        <div class="timer-shortcut-target timer-icon-target">
+          <IconButton label="Duraklat" variant="ghost" disabled={working} onclick={handleToggle}>
+            <Icon name="pause" size={16} filled />
+          </IconButton>
+          <ShortcutHint
+            shortcut={settings.pomodoro.shortcut}
+            visible={showShortcutHints}
+            class="focus-shortcut-hint"
+          />
+        </div>
       {:else if timer.status === 'paused'}
         <IconButton label="Kaydetmeden vazgeç" variant="ghost" disabled={working} onclick={() => (activeTimerDialog = 'discard')}>
           <Icon name="trash" size={16} />
@@ -298,21 +314,35 @@
       {/if}
 
       {#if timer.status === 'idle'}
-        <Button variant="default" class="timer-primary" disabled={working} onclick={handleToggle}>
-          <Icon name="play" size={17} />
-          Başlat
-        </Button>
+        <div class="timer-shortcut-target timer-primary-target">
+          <Button variant="default" class="timer-primary" disabled={working} onclick={handleToggle}>
+            <Icon name="play" size={17} filled />
+            Başlat
+          </Button>
+          <ShortcutHint
+            shortcut={settings.pomodoro.shortcut}
+            visible={showShortcutHints}
+            class="focus-shortcut-hint"
+          />
+        </div>
       {:else}
         <Button variant="default" class="timer-primary" disabled={working} onclick={handleFinish}>
-          <Icon name="stop" size={16} />
+          <Icon name="stop" size={16} filled />
           Bitir ve kaydet
         </Button>
       {/if}
 
       {#if timer.status === 'paused'}
-        <IconButton label="Devam et" variant="ghost" disabled={working} onclick={handleToggle}>
-          <Icon name="play" size={16} />
-        </IconButton>
+        <div class="timer-shortcut-target timer-icon-target">
+          <IconButton label="Devam et" variant="ghost" disabled={working} onclick={handleToggle}>
+            <Icon name="play" size={16} filled />
+          </IconButton>
+          <ShortcutHint
+            shortcut={settings.pomodoro.shortcut}
+            visible={showShortcutHints}
+            class="focus-shortcut-hint"
+          />
+        </div>
       {:else if timer.status === 'running'}
         <IconButton label="Kaydetmeden vazgeç" variant="ghost" disabled={working} onclick={() => (activeTimerDialog = 'discard')}>
           <Icon name="trash" size={16} />
@@ -326,10 +356,17 @@
       <IconButton label="Sıfırla" variant="ghost" disabled={!canReset || working} onclick={handleReset}>
         <Icon name="reset" size={16} />
       </IconButton>
-      <Button variant="default" class="timer-primary" disabled={working} onclick={handleToggle}>
-        <Icon name={timer.status === 'running' ? 'pause' : 'play'} size={17} />
-        {timer.status === 'running' ? 'Duraklat' : timer.status === 'paused' ? 'Devam et' : 'Başlat'}
-      </Button>
+      <div class="timer-shortcut-target timer-primary-target">
+        <Button variant="default" class="timer-primary" disabled={working} onclick={handleToggle}>
+          <Icon name={timer.status === 'running' ? 'pause' : 'play'} size={17} filled />
+          {timer.status === 'running' ? 'Duraklat' : timer.status === 'paused' ? 'Devam et' : 'Başlat'}
+        </Button>
+        <ShortcutHint
+          shortcut={settings.pomodoro.shortcut}
+          visible={showShortcutHints}
+          class="focus-shortcut-hint"
+        />
+      </div>
       <span class="timer-spacer" aria-hidden="true"></span>
     </div>
   {/if}

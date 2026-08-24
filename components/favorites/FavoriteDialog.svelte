@@ -16,7 +16,7 @@
   let kind: Favorite['kind'] = favorite?.kind ?? 'site';
   let name = favorite?.name ?? '';
   let url = favorite?.kind === 'site' ? favorite.url : '';
-  let shortcut = favorite?.kind === 'site' ? favorite.shortcut : '';
+  let shortcut = favorite?.shortcut ?? '';
   let error = '';
   let saving = false;
   const kindOptions: ChoiceOption[] = [
@@ -39,6 +39,13 @@
       return;
     }
 
+    const conflict = shortcut && favorites.some((item) =>
+      item.id !== favorite?.id && item.shortcut === shortcut);
+    if (conflict || (shortcut && reservedShortcuts.includes(shortcut))) {
+      error = 'Bu klavye kısayolu zaten kullanılıyor.';
+      return;
+    }
+
     if (kind === 'folder') {
       saving = true;
       try {
@@ -46,6 +53,7 @@
           kind: 'folder',
           id: favorite?.id ?? createId('favorite-folder'),
           name: name.trim(),
+          shortcut,
           apps: favorite?.kind === 'folder' ? favorite.apps : [],
           createdAt: favorite?.createdAt ?? Date.now(),
         });
@@ -71,13 +79,6 @@
       return;
     }
 
-    const conflict = shortcut && favorites.some((item) =>
-      item.kind === 'site' && item.id !== favorite?.id && item.shortcut === shortcut);
-    if (conflict || (shortcut && reservedShortcuts.includes(shortcut))) {
-      error = 'Bu klavye kısayolu zaten kullanılıyor.';
-      return;
-    }
-
     saving = true;
     try {
       await onSave({
@@ -99,7 +100,7 @@
 
 <Dialog
   title={favorite?.kind === 'folder' ? 'Uygulama klasörünü düzenle' : favorite ? 'Favoriyi düzenle' : 'Favori ekle'}
-  subtitle={favorite?.kind === 'folder' ? 'Klasör bilgileri' : favorite ? 'Site bilgileri ve klavye kısayolu' : 'Site veya uygulama klasörü'}
+  subtitle={favorite?.kind === 'folder' ? 'Klasör bilgileri ve klavye kısayolu' : favorite ? 'Site bilgileri ve klavye kısayolu' : 'Site veya uygulama klasörü'}
   {onClose}
   formId="favorite-form"
   confirmLabel={favorite ? 'Kaydet' : 'Ekle'}
@@ -125,14 +126,16 @@
 
     {#if kind === 'site'}
       <Input bind:value={url} type="text" inputmode="url" icon="globe" label="Site adresi" placeholder="youtube.com" />
-      <ShortcutField
-        value={shortcut}
-        onChange={(value) => (shortcut = value)}
-        description="Yeni sekmede bir yazı alanı odakta değilken bu tuşla siteyi açar."
-      />
     {:else}
-      <p class="favorite-folder-hint">Klasörü oluşturduktan sonra içindeki + düğmesiyle en fazla 9 site ekleyebilirsiniz.</p>
+      <p class="favorite-folder-hint">Klasöre en fazla 9 site ekleyebilirsiniz. Klasör açıkken siteler sırasıyla 1–9 tuşlarıyla açılır.</p>
     {/if}
+    <ShortcutField
+      value={shortcut}
+      onChange={(value) => (shortcut = value)}
+      description={kind === 'folder'
+        ? 'Yeni sekmede bir yazı alanı odakta değilken bu tuşla klasörü açar.'
+        : 'Yeni sekmede bir yazı alanı odakta değilken bu tuşla siteyi açar.'}
+    />
     {#if error}<p class="form-error">{error}</p>{/if}
   </form>
 

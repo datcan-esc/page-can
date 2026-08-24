@@ -178,6 +178,7 @@
 }
 
 .media-card__actions {
+  position: relative;
   display: grid;
   height: 34px;
   min-width: 0;
@@ -192,6 +193,14 @@
   align-items: center;
   justify-self: center;
   gap: 4px;
+}
+
+.media-shortcut-hint.shortcut-hint {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .media-card__navigation .icon-button {

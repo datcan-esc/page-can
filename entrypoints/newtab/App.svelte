@@ -11,7 +11,7 @@
   import FocusSettingsDialog from '../../components/focus/FocusSettingsDialog.svelte';
   import MediaPlayer from '../../components/media/MediaPlayer.svelte';
   import MediaSettingsDialog from '../../components/media/MediaSettingsDialog.svelte';
-  import AppearanceDialog from '../../components/settings/AppearanceDialog.svelte';
+  import SettingsDialog from '../../components/settings/SettingsDialog.svelte';
   import ClockCard from '../../components/shell/ClockCard.svelte';
   import StatsCard from '../../components/stats/StatsCard.svelte';
   import StatsDetailDialog from '../../components/stats/StatsDetailDialog.svelte';
@@ -54,14 +54,13 @@
     DailyStat,
     Favorite,
     FavoriteFolder,
-    FavoriteSite,
     FolderApp,
     MediaPreferences,
     PomodoroPreferences,
     PomodoroState,
     Todo,
   } from '../../lib/types';
-  import { eventShortcut, localMonthRange, localWeekRange } from '../../lib/utils';
+  import { eventShortcut, localMonthRange, localWeekRange, singleKeyFromEvent } from '../../lib/utils';
   import {
     analyzeWallpaper,
     getWallpaper,
@@ -73,7 +72,7 @@
   export let initialSettings: AppSettings;
   export let initialError = '';
 
-  type DialogName = 'appearance' | 'favorite' | 'folder-app' | 'bookmarks' | 'todos' | 'pomodoro' | 'media' | 'stats';
+  type DialogName = 'settings' | 'favorite' | 'folder-app' | 'bookmarks' | 'todos' | 'pomodoro' | 'media' | 'stats';
 
   let settings = initialSettings;
   let favorites: Favorite[] = [];
@@ -102,6 +101,8 @@
   let editingFolderApp: FolderApp | null = null;
   let wallpaperUrl = '';
   let hasWallpaper = false;
+  let shortcutHintKeyHeld = false;
+  let todoFocusRequest = 0;
   let clockInterval: number | undefined;
 
   const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
@@ -119,7 +120,12 @@
   $: activeFolder = favorites.find((item): item is FavoriteFolder =>
     item.kind === 'folder' && item.id === activeFolderId) ?? null;
   $: favoriteShortcuts = favorites.flatMap((favorite) =>
-    favorite.kind === 'site' && favorite.shortcut ? [favorite.shortcut] : []);
+    favorite.shortcut ? [favorite.shortcut] : []);
+  $: showShortcutHints = shortcutHintKeyHeld && !activeDialog;
+  $: globalActionShortcuts = [
+    settings.shortcuts.revealKey,
+    settings.shortcuts.todoFocus,
+  ].filter(Boolean);
 
   function updateClock() {
     const now = new Date();
@@ -284,6 +290,7 @@
     const normalized = normalizeSettings(next);
     await saveSettings(normalized);
     settings = structuredClone(normalized);
+    shortcutHintKeyHeld = false;
     applyTheme(settings.theme);
 
     if (timer.status === 'idle') {
@@ -412,7 +419,7 @@
     if (
       !loaded ||
       !timer ||
-      target?.closest('input, textarea, select, button, a, [role="textbox"]') ||
+      target?.closest('input, textarea, select, [role="textbox"]') ||
       target?.isContentEditable ||
       event.isComposing ||
       event.repeat ||
@@ -421,6 +428,13 @@
     ) return;
 
     const pressed = eventShortcut(event);
+    if (pressed === 'Space' && target?.closest('button, a')) return;
+    if (pressed === settings.shortcuts.todoFocus) {
+      event.preventDefault();
+      todoFocusRequest += 1;
+      return;
+    }
+
     if (pressed === settings.pomodoro.shortcut) {
       event.preventDefault();
       try {
@@ -431,12 +445,50 @@
       return;
     }
 
-    const favorite = favorites.find((item): item is FavoriteSite =>
-      item.kind === 'site' && Boolean(item.shortcut) && item.shortcut === pressed);
+    const favorite = favorites.find((item) =>
+      Boolean(item.shortcut) && item.shortcut === pressed);
     if (favorite) {
       event.preventDefault();
-      window.location.assign(favorite.url);
+      if (favorite.kind === 'folder') {
+        openAppDrawer(favorite);
+      } else {
+        window.location.assign(favorite.url);
+      }
     }
+  }
+
+  function isRevealKeydown(event: KeyboardEvent): boolean {
+    const revealKey = settings.shortcuts.revealKey;
+    const pressedKey = singleKeyFromEvent(event);
+    if (!revealKey || pressedKey !== revealKey) return false;
+    if (revealKey === 'Shift' || revealKey === 'Ctrl' || revealKey === 'Alt' || revealKey === 'Meta') {
+      return true;
+    }
+    return !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey;
+  }
+
+  function handleGlobalKeydown(event: KeyboardEvent) {
+    const target = event.target as HTMLElement | null;
+    const isTextEntry = Boolean(
+      target?.closest('input, textarea, select, [role="textbox"]')
+      || target?.isContentEditable,
+    );
+    if (!activeDialog && !isTextEntry && isRevealKeydown(event)) {
+      event.preventDefault();
+      shortcutHintKeyHeld = true;
+      return;
+    }
+    void handleShortcut(event);
+  }
+
+  function handleGlobalKeyup(event: KeyboardEvent) {
+    if (singleKeyFromEvent(event) === settings.shortcuts.revealKey) {
+      shortcutHintKeyHeld = false;
+    }
+  }
+
+  function hideShortcutHints() {
+    shortcutHintKeyHeld = false;
   }
 
   async function syncLocalChanges(
@@ -534,7 +586,9 @@
     });
     updateClock();
     clockInterval = window.setInterval(updateClock, 30_000);
-    window.addEventListener('keydown', handleShortcut);
+    window.addEventListener('keydown', handleGlobalKeydown);
+    window.addEventListener('keyup', handleGlobalKeyup);
+    window.addEventListener('blur', hideShortcutHints);
     browser.storage.onChanged.addListener(handleStorageChanges);
     browser.bookmarks.onCreated.addListener(handleBookmarksChanged);
     browser.bookmarks.onRemoved.addListener(handleBookmarksChanged);
@@ -543,7 +597,9 @@
   });
 
   onDestroy(() => {
-    window.removeEventListener('keydown', handleShortcut);
+    window.removeEventListener('keydown', handleGlobalKeydown);
+    window.removeEventListener('keyup', handleGlobalKeyup);
+    window.removeEventListener('blur', hideShortcutHints);
     browser.storage.onChanged.removeListener(handleStorageChanges);
     browser.bookmarks.onCreated.removeListener(handleBookmarksChanged);
     browser.bookmarks.onRemoved.removeListener(handleBookmarksChanged);
@@ -570,7 +626,7 @@
   <main class:has-wallpaper={hasWallpaper} class="page-shell">
     <header class="topbar">
       <ClockCard time={timeLabel} date={dateLabel} />
-      <IconButton label="Görünüm ayarlarını aç" title="Görünüm" class="settings-button" onclick={() => (activeDialog = 'appearance')}>
+      <IconButton label="Ayarları aç" title="Ayarlar" class="settings-button" onclick={() => (activeDialog = 'settings')}>
         <Icon name="sliders" size={17} />
       </IconButton>
     </header>
@@ -580,6 +636,7 @@
         <FavoriteGrid
           {favorites}
           showNames={settings.theme.showFavoriteNames}
+          {showShortcutHints}
           onAdd={() => openFavoriteDialog()}
           onOpenFolder={openAppDrawer}
           onEdit={openFavoriteDialog}
@@ -596,6 +653,7 @@
         <FocusCard
           {timer}
           {settings}
+          {showShortcutHints}
           onTimerChange={(next) => (timer = next)}
           onOpenSettings={() => (activeDialog = 'pomodoro')}
         />
@@ -605,10 +663,14 @@
       <div class="dashboard-column dashboard-column--right">
         <MediaPlayer
           shortcut={settings.media.shortcut}
+          {showShortcutHints}
           onOpenSettings={() => (activeDialog = 'media')}
         />
         <TodoCard
           todos={activeTodos}
+          shortcut={settings.shortcuts.todoFocus}
+          {showShortcutHints}
+          focusRequest={todoFocusRequest}
           onChange={(next) => {
             void updateActiveTodos(next)
               .catch((error) => reportError(error, 'Görevler kaydedilemedi.'));
@@ -628,6 +690,7 @@
   <AppDrawer
     folder={activeFolder}
     showNames={settings.theme.showFavoriteNames}
+    {showShortcutHints}
     suspended={Boolean(activeDialog)}
     onClose={() => (activeFolderId = '')}
     onAdd={() => openFolderAppDialog(activeFolder)}
@@ -652,10 +715,12 @@
   />
 {/if}
 
-{#if activeDialog === 'appearance'}
-  <AppearanceDialog
+{#if activeDialog === 'settings'}
+  <SettingsDialog
     {settings}
     {hasWallpaper}
+    wallpaperPreviewUrl={wallpaperUrl}
+    {favoriteShortcuts}
     onClose={() => (activeDialog = null)}
     onSave={updateSettings}
     onWallpaper={updateWallpaper}
@@ -668,7 +733,11 @@
   <FavoriteDialog
     favorite={editingFavorite}
     {favorites}
-    reservedShortcuts={[settings.pomodoro.shortcut, settings.media.shortcut].filter(Boolean)}
+    reservedShortcuts={[
+      settings.pomodoro.shortcut,
+      settings.media.shortcut,
+      ...globalActionShortcuts,
+    ].filter(Boolean)}
     onClose={() => (activeDialog = null)}
     onSave={saveFavorite}
   />
@@ -700,7 +769,7 @@
   <FocusSettingsDialog
     preferences={settings.pomodoro}
     {favoriteShortcuts}
-    reservedShortcuts={[settings.media.shortcut].filter(Boolean)}
+    reservedShortcuts={[settings.media.shortcut, ...globalActionShortcuts].filter(Boolean)}
     onClose={() => (activeDialog = null)}
     onSave={updatePomodoroPreferences}
   />
@@ -712,6 +781,7 @@
     reservedShortcuts={[
       settings.pomodoro.shortcut,
       ...favoriteShortcuts,
+      ...globalActionShortcuts,
     ].filter(Boolean)}
     onClose={() => (activeDialog = null)}
     onSave={updateMediaPreferences}

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { FOLDER_APP_LIMIT } from '../../lib/display-limits';
   import type { FavoriteFolder, FolderApp } from '../../lib/types';
+  import { numberShortcutIndex } from '../../lib/utils';
   import Card from '../ui/Card.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
@@ -10,6 +11,7 @@
 
   export let folder: FavoriteFolder;
   export let showNames = true;
+  export let showShortcutHints = false;
   export let suspended = false;
   export let onClose: () => void;
   export let onAdd: () => void;
@@ -41,6 +43,21 @@
         return;
       }
       onClose();
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const shortcutIndex = numberShortcutIndex(event);
+    if (
+      shortcutIndex !== null
+      && !target?.closest('input, textarea, select, [role="textbox"]')
+      && !target?.isContentEditable
+    ) {
+      const app = folder.apps[shortcutIndex];
+      if (app) {
+        event.preventDefault();
+        window.location.assign(app.url);
+      }
       return;
     }
 
@@ -92,6 +109,8 @@
           variant="site"
           name={app.name}
           url={app.url}
+          shortcut={String(index + 1)}
+          showShortcutHint={showShortcutHints}
           showName={showNames}
           menuEnabled
           menuOpen={menuId === app.id}

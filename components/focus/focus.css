@@ -1,3 +1,31 @@
+.timer-shortcut-target {
+  position: relative;
+}
+
+.timer-primary-target {
+  width: 100%;
+  min-width: 0;
+}
+
+.timer-icon-target {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+}
+
+.timer-recovery__resume {
+  display: inline-flex;
+}
+
+.focus-shortcut-hint.shortcut-hint {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .focus-card .card__body {
   display: flex;
   min-height: 0;

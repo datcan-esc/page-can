@@ -26,6 +26,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   media: {
     shortcut: '',
   },
+  shortcuts: {
+    revealKey: 'Shift',
+    todoFocus: '',
+  },
 };
 
 export const DEFAULT_TIMER: PomodoroState = {

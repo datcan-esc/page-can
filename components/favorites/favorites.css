@@ -111,6 +111,18 @@
   white-space: nowrap;
 }
 
+.app-tile__shortcut-hint.shortcut-hint {
+  position: absolute;
+  z-index: 5;
+  top: calc(50% - 7px);
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.app-tile-entry:not(.show-name) .app-tile__shortcut-hint {
+  top: 50%;
+}
+
 .app-tile:hover .app-tile__name,
 .app-tile:focus-visible .app-tile__name {
   color: var(--text);

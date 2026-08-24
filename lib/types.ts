@@ -45,10 +45,16 @@ export interface MediaPreferences {
   shortcut: string;
 }
 
+export interface ShortcutPreferences {
+  revealKey: string;
+  todoFocus: string;
+}
+
 export interface AppSettings {
   theme: ThemePreferences;
   pomodoro: PomodoroPreferences;
   media: MediaPreferences;
+  shortcuts: ShortcutPreferences;
 }
 
 export interface FavoriteSite {
@@ -71,6 +77,7 @@ export interface FavoriteFolder {
   kind: 'folder';
   id: string;
   name: string;
+  shortcut: string;
   apps: FolderApp[];
   createdAt: number;
 }

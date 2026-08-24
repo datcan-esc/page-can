@@ -63,7 +63,7 @@ test('storage sınırları ve todo migration', async (t) => {
     }
   });
 
-  await t.test('URL ve tarih aralıklarını normalize eder', async () => {
+  await t.test('URL, tarih aralıkları ve sayı kısayollarını normalize eder', async () => {
     const harness = await createStorageHarness();
     try {
       assert.equal(harness.utils.normalizeUrl('example.com'), 'https://example.com/');
@@ -75,6 +75,21 @@ test('storage sınırları ve todo migration', async (t) => {
         harness.utils.localMonthRange(new Date(2026, 7, 9, 12)),
         { start: '2026-08-01', end: '2026-08-31' },
       );
+      const numberEvent = {
+        key: '1',
+        ctrlKey: false,
+        altKey: false,
+        shiftKey: false,
+        metaKey: false,
+        isComposing: false,
+        repeat: false,
+      };
+      assert.equal(harness.utils.numberShortcutIndex(numberEvent), 0);
+      assert.equal(harness.utils.numberShortcutIndex({ ...numberEvent, key: '9' }), 8);
+      assert.equal(harness.utils.numberShortcutIndex({ ...numberEvent, key: '0' }), null);
+      assert.equal(harness.utils.numberShortcutIndex({ ...numberEvent, ctrlKey: true }), null);
+      assert.equal(harness.utils.singleKeyFromEvent({ ...numberEvent, key: 'Shift', shiftKey: true }), 'Shift');
+      assert.equal(harness.utils.singleKeyFromEvent({ ...numberEvent, key: 'k' }), 'K');
     } finally {
       await harness.close();
     }
@@ -94,6 +109,12 @@ test('storage sınırları ve todo migration', async (t) => {
       assert.equal(settings.pomodoro.idleMinutes, 15);
       assert.equal(settings.pomodoro.checkInMinutes, 60);
       assert.equal(settings.media.shortcut, '');
+      assert.deepEqual(settings.shortcuts, { revealKey: 'Shift', todoFocus: '' });
+
+      const shortcuts = harness.storage.normalizeSettings({
+        shortcuts: { revealKey: 'Alt', todoFocus: 'Ctrl+T' },
+      });
+      assert.deepEqual(shortcuts.shortcuts, { revealKey: 'Alt', todoFocus: 'Ctrl+T' });
     } finally {
       await harness.close();
     }
@@ -139,8 +160,16 @@ test('storage sınırları ve todo migration', async (t) => {
             kind: 'folder',
             id: 'folder',
             name: 'Araçlar',
+            shortcut: 'Ctrl+K',
             apps: folderApps,
             createdAt: 2,
+          },
+          {
+            kind: 'folder',
+            id: 'legacy-folder',
+            name: 'Eski klasör',
+            apps: [],
+            createdAt: 3,
           },
         ],
       },
@@ -156,12 +185,15 @@ test('storage sınırları ve todo migration', async (t) => {
         createdAt: 1,
       });
       assert.equal(favorites[1].kind, 'folder');
+      assert.equal(favorites[1].shortcut, 'Ctrl+K');
       assert.equal(favorites[1].apps.length, 9);
       assert.equal(favorites[1].apps[0].url, 'https://app0.example.com/');
+      assert.equal(favorites[2].shortcut, '');
 
       await harness.storage.saveFavorites(favorites);
       assert.equal(harness.state.local.favorites[0].kind, 'site');
       assert.equal(harness.state.local.favorites[1].apps.length, 9);
+      assert.equal(harness.state.local.favorites[2].shortcut, '');
     } finally {
       await harness.close();
     }

@@ -7,6 +7,7 @@
 
   export let favorites: Favorite[] = [];
   export let showNames = true;
+  export let showShortcutHints = false;
   export let onAdd: () => void;
   export let onOpenFolder: (folder: FavoriteFolder) => void;
   export let onEdit: (favorite: Favorite) => void;
@@ -37,6 +38,8 @@
         name={favorite.name}
         url={favorite.kind === 'site' ? favorite.url : ''}
         apps={favorite.kind === 'folder' ? favorite.apps : []}
+        shortcut={favorite.shortcut}
+        showShortcutHint={showShortcutHints}
         showName={showNames}
         menuEnabled
         menuOpen={menuId === favorite.id}

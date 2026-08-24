@@ -8,6 +8,7 @@
   import Favicon from '../ui/Favicon.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
+  import ShortcutHint from '../ui/ShortcutHint.svelte';
   import FolderPreview from './FolderPreview.svelte';
   import './favorites.css';
 
@@ -17,6 +18,8 @@
   export let apps: FolderApp[] = [];
   export let ariaLabel = '';
   export let title = '';
+  export let shortcut = '';
+  export let showShortcutHint = false;
   export let showName = true;
   export let disabled = false;
   export let menuEnabled = false;
@@ -90,6 +93,12 @@
       {#if showName}<span class="app-tile__name">{name}</span>{/if}
     </button>
   {/if}
+
+  <ShortcutHint
+    {shortcut}
+    visible={showShortcutHint}
+    class="app-tile__shortcut-hint"
+  />
 
   {#if menuEnabled}
     <IconButton

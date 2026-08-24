@@ -17,9 +17,11 @@
   import Card from '../ui/Card.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
+  import ShortcutHint from '../ui/ShortcutHint.svelte';
   import './media.css';
 
   export let shortcut = '';
+  export let showShortcutHints = false;
   export let onOpenSettings: () => void;
 
   const MEDIA_TAB_PATTERNS = [
@@ -403,11 +405,13 @@
       event.isComposing ||
       event.repeat ||
       document.querySelector('[role="dialog"]') ||
-      target?.closest('input, textarea, select, button, a, [role="textbox"]') ||
+      target?.closest('input, textarea, select, [role="textbox"]') ||
       target?.isContentEditable
     ) return;
 
-    if (eventShortcut(event) !== shortcut) return;
+    const pressed = eventShortcut(event);
+    if (pressed === 'Space' && target?.closest('button, a')) return;
+    if (pressed !== shortcut) return;
     event.preventDefault();
     void sendControl({ action: 'toggle' });
   }
@@ -591,6 +595,11 @@
               <Icon name="next" size={19} filled />
             </IconButton>
           </div>
+          <ShortcutHint
+            {shortcut}
+            visible={showShortcutHints}
+            class="media-shortcut-hint"
+          />
           <IconButton
             label="Medya ayarları"
             title="Kısayol ayarı"
@@ -619,6 +628,11 @@
         </div>
         <div class="media-card__actions">
           <output class="media-card__time" aria-hidden="true">--:--/--:--</output>
+          <ShortcutHint
+            {shortcut}
+            visible={showShortcutHints}
+            class="media-shortcut-hint"
+          />
           <IconButton
             label="Medya ayarları"
             title="Kısayol ayarı"

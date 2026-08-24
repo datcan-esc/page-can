@@ -5,8 +5,17 @@
 }
 
 .todo-composer {
+  position: relative;
   min-width: 0;
   margin: 0;
+}
+
+.todo-shortcut-hint.shortcut-hint {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .todo-composer .input-control {

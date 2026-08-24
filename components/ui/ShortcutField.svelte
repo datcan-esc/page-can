@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatShortcut, shortcutFromEvent } from '../../lib/utils';
+  import { formatShortcut, shortcutFromEvent, singleKeyFromEvent } from '../../lib/utils';
   import Button from './Button.svelte';
   import Icon from './Icon.svelte';
   import './shortcut-field.css';
@@ -8,6 +8,7 @@
   export let onChange: (shortcut: string) => void;
   export let label = 'Klavye kısayolu';
   export let description = 'Yeni sekmede bir yazı alanı odakta değilken çalışır.';
+  export let singleKeyOnly = false;
 
   let recording = false;
 
@@ -26,7 +27,7 @@
       return;
     }
 
-    const shortcut = shortcutFromEvent(event);
+    const shortcut = singleKeyOnly ? singleKeyFromEvent(event) : shortcutFromEvent(event);
     if (!shortcut) return;
     onChange(shortcut);
     recording = false;

@@ -53,6 +53,7 @@ export function normalizeSettings(value: unknown): AppSettings {
   const theme = isRecord(stored.theme) ? stored.theme : {};
   const pomodoro = isRecord(stored.pomodoro) ? stored.pomodoro : {};
   const media = isRecord(stored.media) ? stored.media : {};
+  const shortcuts = isRecord(stored.shortcuts) ? stored.shortcuts : {};
   const mode = theme.mode === 'light' || theme.mode === 'dark' || theme.mode === 'system'
     ? theme.mode
     : DEFAULT_SETTINGS.theme.mode;
@@ -113,6 +114,16 @@ export function normalizeSettings(value: unknown): AppSettings {
     media: {
       shortcut: stringValue(media.shortcut, DEFAULT_SETTINGS.media.shortcut).slice(0, 64),
     },
+    shortcuts: {
+      revealKey: stringValue(
+        shortcuts.revealKey,
+        DEFAULT_SETTINGS.shortcuts.revealKey,
+      ).slice(0, 64),
+      todoFocus: stringValue(
+        shortcuts.todoFocus,
+        DEFAULT_SETTINGS.shortcuts.todoFocus,
+      ).slice(0, 64),
+    },
   };
 }
 
@@ -147,6 +158,7 @@ function normalizeFavorite(value: unknown): Favorite | null {
       kind: 'folder',
       id,
       name,
+      shortcut: stringValue(value.shortcut, '').slice(0, 64),
       apps: Array.isArray(value.apps)
         ? value.apps
           .map(normalizeFolderApp)

@@ -91,9 +91,43 @@ export function shortcutFromEvent(event: KeyboardEvent): string | null {
   return [...modifiers, key].join('+');
 }
 
+export function singleKeyFromEvent(event: KeyboardEvent): string | null {
+  const modifierKeys: Record<string, string> = {
+    Control: 'Ctrl',
+    Shift: 'Shift',
+    Alt: 'Alt',
+    Meta: 'Meta',
+  };
+  const modifierKey = modifierKeys[event.key];
+  if (modifierKey) return modifierKey;
+  if (event.key === 'Tab' || event.key === 'CapsLock') return null;
+  if (event.code === 'Space') return 'Space';
+
+  const key = event.key.length === 1
+    ? event.key.toLocaleUpperCase('tr-TR')
+    : event.key;
+  const isFunctionKey = /^F([1-9]|1[0-2])$/.test(key);
+  const isDirectKey = /^[A-ZÇĞİÖŞÜ0-9]$/u.test(key);
+  return isFunctionKey || isDirectKey ? key : null;
+}
+
 export function eventShortcut(event: KeyboardEvent): string {
   const { modifiers, key } = shortcutParts(event);
   return [...modifiers, key].join('+');
+}
+
+export function numberShortcutIndex(event: KeyboardEvent): number | null {
+  if (
+    event.ctrlKey
+    || event.altKey
+    || event.shiftKey
+    || event.metaKey
+    || event.isComposing
+    || event.repeat
+    || !/^[1-9]$/.test(event.key)
+  ) return null;
+
+  return Number(event.key) - 1;
 }
 
 export function formatShortcut(shortcut: string): string {

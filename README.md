@@ -5,7 +5,9 @@
 ## Özellikler
 
 - İsteğe bağlı isim, favicon ve kullanıcı tanımlı klavye kısayolu içeren favori site kartları
-- Favoriler arasında duran, ekran ortasında blurlu 3×3 çekmece açan ve en fazla dokuz site tutan uygulama klasörleri
+- Atanabilir kısayolla açılan, ekran ortasında blurlu 3×3 çekmece gösteren ve içindeki siteleri otomatik `1–9` tuşlarına bağlayan uygulama klasörleri
+- Kullanıcının seçtiği tuş basılıyken favori, klasör, pomodoro, medya ve yapılacak kısayollarını ortak ipucu yüzeyleriyle gösterme
+- Atanabilir bir kısayolla yapılacaklar girişine doğrudan odaklanma
 - Son beş yer imini sabit satır ritminde gösteren liste ve aranabilir tam yer imi görünümü
 - Ayarlanabilir geri sayım ve sınırsız sayaç modlarına sahip odak zamanlayıcısı
 - Tarayıcı kapansa veya yeni sekme kapanmış olsa da geri sayımı sürdüren alarm/bildirim sistemi
@@ -51,6 +53,7 @@ Temel bileşen kuralları:
 - `Dialog`: başlık ile subtitle'ı dikey ayraçla aynı satırda, kapatma ve varsa `Vazgeç / Kaydet` eylemlerini ortak düzende gösterir.
 - `Input`: metin, URL, sayı, arama ve çok satırlı girişlerin ikon, placeholder, focus ve trailing aksiyon davranışını yönetir.
 - `ShortcutField`: kısayol kaydetme, gösterme, açıklama ve `Kaldır` eylemini standartlaştırır.
+- `ShortcutHint`: seçilen gösterme tuşu basılıyken farklı kartlardaki kısayolları aynı kompakt `<kbd>` yüzeyiyle gösterir.
 - `List` ve `ListItem`: yer imi ve yapılacak satırlarının hizasını ve sağ aksiyon alanını paylaşır.
 - `SegmentedToggle`: az sayıda birbirini dışlayan görünüm veya mod seçeneği için kullanılır.
 - `ChoicePicker`: açıklama gerektiren birbirini dışlayan seçenekleri, ikonlu ve kolay taranabilen seçim kartları olarak sunar.

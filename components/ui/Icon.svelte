@@ -82,6 +82,10 @@
     <rect x="6.75" y="4.75" width="4" height="14.5" rx="1.25" />
     <rect x="13.25" y="4.75" width="4" height="14.5" rx="1.25" />
   </svg>
+{:else if filled && name === 'stop'}
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+    <rect x="5" y="5" width="14" height="14" rx="2.25" />
+  </svg>
 {:else if filled && name === 'previous'}
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
     <rect x="4.5" y="5" width="3" height="14" rx="1.15" />
