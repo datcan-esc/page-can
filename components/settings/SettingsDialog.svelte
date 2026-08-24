@@ -235,6 +235,11 @@
           <span class="settings-nav__label">{section.label}</span>
         </button>
       {/each}
+
+      <div class="settings-brand">
+        <img src="/icons/can-icon-dark.png" alt="" width="26" height="26" />
+        <span>made by <strong>.can</strong></span>
+      </div>
     </nav>
 
     <div class="settings-panel">

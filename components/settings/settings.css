@@ -67,6 +67,30 @@
   white-space: nowrap;
 }
 
+.settings-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding: 14px 9px 2px;
+  color: var(--muted);
+  font-size: var(--type-body);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.settings-brand img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+}
+
+.settings-brand strong {
+  color: var(--text);
+  font-weight: var(--weight-title);
+}
+
 .settings-panel {
   min-width: 0;
   padding: 2px 4px 4px 0;
@@ -415,6 +439,14 @@ input[type="range"]::-webkit-slider-thumb {
   .settings-nav__icon {
     width: 20px;
     height: 20px;
+  }
+
+  .settings-brand {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--separator);
   }
 
   .settings-panel {
