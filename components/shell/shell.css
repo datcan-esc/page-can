@@ -40,7 +40,7 @@
 .clock-card__divider {
   width: 1px;
   height: 20px;
-  background: var(--separator);
+  background: color-mix(in srgb, var(--text) 34%, transparent);
 }
 
 .clock-card__date {
