@@ -51,13 +51,31 @@ export interface AppSettings {
   media: MediaPreferences;
 }
 
-export interface Favorite {
+export interface FavoriteSite {
+  kind: 'site';
   id: string;
   name: string;
   url: string;
   shortcut: string;
   createdAt: number;
 }
+
+export interface FolderApp {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: number;
+}
+
+export interface FavoriteFolder {
+  kind: 'folder';
+  id: string;
+  name: string;
+  apps: FolderApp[];
+  createdAt: number;
+}
+
+export type Favorite = FavoriteSite | FavoriteFolder;
 
 export interface Todo {
   id: string;

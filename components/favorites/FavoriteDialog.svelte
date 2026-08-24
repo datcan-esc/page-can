@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Favorite } from '../../lib/types';
   import { createId, normalizeUrl } from '../../lib/utils';
+  import ChoicePicker, { type ChoiceOption } from '../ui/ChoicePicker.svelte';
   import Dialog from '../ui/Dialog.svelte';
   import Input from '../ui/Input.svelte';
   import ShortcutField from '../ui/ShortcutField.svelte';
@@ -12,16 +13,53 @@
   export let onClose: () => void;
   export let onSave: (favorite: Favorite) => Promise<void>;
 
+  let kind: Favorite['kind'] = favorite?.kind ?? 'site';
   let name = favorite?.name ?? '';
-  let url = favorite?.url ?? '';
-  let shortcut = favorite?.shortcut ?? '';
+  let url = favorite?.kind === 'site' ? favorite.url : '';
+  let shortcut = favorite?.kind === 'site' ? favorite.shortcut : '';
   let error = '';
   let saving = false;
+  const kindOptions: ChoiceOption[] = [
+    {
+      value: 'site',
+      label: 'Site',
+      icon: 'globe',
+    },
+    {
+      value: 'folder',
+      label: 'Uygulama klasörü',
+      icon: 'grid',
+    },
+  ];
 
   async function submit() {
     error = '';
-    if (!name.trim() || !url.trim()) {
-      error = 'İsim ve adres alanlarını doldurun.';
+    if (!name.trim()) {
+      error = kind === 'folder' ? 'Klasör adını girin.' : 'İsim alanını doldurun.';
+      return;
+    }
+
+    if (kind === 'folder') {
+      saving = true;
+      try {
+        await onSave({
+          kind: 'folder',
+          id: favorite?.id ?? createId('favorite-folder'),
+          name: name.trim(),
+          apps: favorite?.kind === 'folder' ? favorite.apps : [],
+          createdAt: favorite?.createdAt ?? Date.now(),
+        });
+        onClose();
+      } catch (saveError) {
+        error = saveError instanceof Error ? saveError.message : 'Uygulama klasörü kaydedilemedi.';
+      } finally {
+        saving = false;
+      }
+      return;
+    }
+
+    if (!url.trim()) {
+      error = 'Site adresini girin.';
       return;
     }
 
@@ -34,7 +72,7 @@
     }
 
     const conflict = shortcut && favorites.some((item) =>
-      item.id !== favorite?.id && item.shortcut === shortcut);
+      item.kind === 'site' && item.id !== favorite?.id && item.shortcut === shortcut);
     if (conflict || (shortcut && reservedShortcuts.includes(shortcut))) {
       error = 'Bu klavye kısayolu zaten kullanılıyor.';
       return;
@@ -43,6 +81,7 @@
     saving = true;
     try {
       await onSave({
+        kind: 'site',
         id: favorite?.id ?? createId('favorite'),
         name: name.trim(),
         url: normalizedUrl,
@@ -59,21 +98,41 @@
 </script>
 
 <Dialog
-  title={favorite ? 'Favoriyi düzenle' : 'Favori ekle'}
-  subtitle="Site bilgileri ve klavye kısayolu"
+  title={favorite?.kind === 'folder' ? 'Uygulama klasörünü düzenle' : favorite ? 'Favoriyi düzenle' : 'Favori ekle'}
+  subtitle={favorite?.kind === 'folder' ? 'Klasör bilgileri' : favorite ? 'Site bilgileri ve klavye kısayolu' : 'Site veya uygulama klasörü'}
   {onClose}
   formId="favorite-form"
   confirmLabel={favorite ? 'Kaydet' : 'Ekle'}
   {saving}
 >
   <form id="favorite-form" class="dialog-form" onsubmit={(event) => { event.preventDefault(); void submit(); }}>
-    <Input data-autofocus bind:value={name} label="İsim" maxLength={32} placeholder="Örn. Youtube" />
-    <Input bind:value={url} type="text" inputmode="url" icon="globe" label="Site adresi" placeholder="youtube.com" />
-    <ShortcutField
-      value={shortcut}
-      onChange={(value) => (shortcut = value)}
-      description="Yeni sekmede bir yazı alanı odakta değilken bu tuşla siteyi açar."
+    {#if !favorite}
+      <ChoicePicker
+        value={kind}
+        options={kindOptions}
+        label="Ne eklemek istiyorsunuz?"
+        onChange={(value) => { kind = value as Favorite['kind']; error = ''; }}
+      />
+    {/if}
+
+    <Input
+      data-autofocus
+      bind:value={name}
+      label={kind === 'folder' ? 'Klasör adı' : 'İsim'}
+      maxLength={32}
+      placeholder={kind === 'folder' ? 'Örn. Sosyal' : 'Örn. YouTube'}
     />
+
+    {#if kind === 'site'}
+      <Input bind:value={url} type="text" inputmode="url" icon="globe" label="Site adresi" placeholder="youtube.com" />
+      <ShortcutField
+        value={shortcut}
+        onChange={(value) => (shortcut = value)}
+        description="Yeni sekmede bir yazı alanı odakta değilken bu tuşla siteyi açar."
+      />
+    {:else}
+      <p class="favorite-folder-hint">Klasörü oluşturduktan sonra içindeki + düğmesiyle en fazla 9 site ekleyebilirsiniz.</p>
+    {/if}
     {#if error}<p class="form-error">{error}</p>{/if}
   </form>
 

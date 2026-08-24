@@ -1,19 +1,20 @@
 <script lang="ts">
-  import type { Favorite } from '../../lib/types';
+  import { FAVORITE_CARD_LIMIT } from '../../lib/display-limits';
+  import type { Favorite, FavoriteFolder } from '../../lib/types';
   import Card from '../ui/Card.svelte';
-  import FavoriteAddTile from './FavoriteAddTile.svelte';
-  import FavoriteTile from './FavoriteTile.svelte';
+  import AppTile from './AppTile.svelte';
   import './favorites.css';
 
   export let favorites: Favorite[] = [];
   export let showNames = true;
   export let onAdd: () => void;
+  export let onOpenFolder: (folder: FavoriteFolder) => void;
   export let onEdit: (favorite: Favorite) => void;
   export let onDelete: (favorite: Favorite) => void;
 
   let menuId = '';
 
-  $: visibleFavorites = favorites.slice(0, 15);
+  $: visibleFavorites = favorites.slice(0, FAVORITE_CARD_LIMIT);
 
   function toggleMenu(id: string) {
     menuId = menuId === id ? '' : id;
@@ -31,16 +32,28 @@
 >
   <div class="favorite-grid">
     {#each visibleFavorites as favorite (favorite.id)}
-      <FavoriteTile
-        {favorite}
+      <AppTile
+        variant={favorite.kind}
+        name={favorite.name}
+        url={favorite.kind === 'site' ? favorite.url : ''}
+        apps={favorite.kind === 'folder' ? favorite.apps : []}
         showName={showNames}
+        menuEnabled
         menuOpen={menuId === favorite.id}
-        onMenuToggle={toggleMenu}
-        onEdit={(item) => { menuId = ''; onEdit(item); }}
-        onDelete={(item) => { menuId = ''; onDelete(item); }}
+        onActivate={() => { if (favorite.kind === 'folder') onOpenFolder(favorite); }}
+        onMenuToggle={() => toggleMenu(favorite.id)}
+        onEdit={() => { menuId = ''; onEdit(favorite); }}
+        onDelete={() => { menuId = ''; onDelete(favorite); }}
       />
     {/each}
 
-    <FavoriteAddTile showName={showNames} disabled={favorites.length >= 15} {onAdd} />
+    <AppTile
+      variant="add"
+      name="Ekle"
+      ariaLabel="Favori ekle"
+      showName={showNames}
+      disabled={favorites.length >= FAVORITE_CARD_LIMIT}
+      onActivate={onAdd}
+    />
   </div>
 </Card>

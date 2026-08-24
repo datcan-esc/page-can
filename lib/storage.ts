@@ -1,9 +1,13 @@
 import { browser } from 'wxt/browser';
 import { DEFAULT_SETTINGS, DEFAULT_TIMER } from './defaults';
+import { FAVORITE_CARD_LIMIT, FOLDER_APP_LIMIT } from './display-limits';
 import type {
   AppSettings,
   DailyStat,
   Favorite,
+  FavoriteFolder,
+  FavoriteSite,
+  FolderApp,
   FocusInterval,
   PomodoroState,
   TimerRecovery,
@@ -112,7 +116,7 @@ export function normalizeSettings(value: unknown): AppSettings {
   };
 }
 
-function normalizeFavorite(value: unknown): Favorite | null {
+function normalizeFolderApp(value: unknown): FolderApp | null {
   if (!isRecord(value)) return null;
   const id = stringValue(value.id, '');
   const name = stringValue(value.name, '').trim().slice(0, 32);
@@ -127,9 +131,49 @@ function normalizeFavorite(value: unknown): Favorite | null {
     id,
     name,
     url,
-    shortcut: stringValue(value.shortcut, '').slice(0, 64),
     createdAt: finiteNumber(value.createdAt, 0, 0),
   };
+}
+
+function normalizeFavorite(value: unknown): Favorite | null {
+  if (!isRecord(value)) return null;
+  const id = stringValue(value.id, '');
+  const name = stringValue(value.name, '').trim().slice(0, 32);
+  const createdAt = finiteNumber(value.createdAt, 0, 0);
+  if (!id || !name) return null;
+
+  if (value.kind === 'folder') {
+    const folder: FavoriteFolder = {
+      kind: 'folder',
+      id,
+      name,
+      apps: Array.isArray(value.apps)
+        ? value.apps
+          .map(normalizeFolderApp)
+          .filter((app): app is FolderApp => app !== null)
+          .slice(0, FOLDER_APP_LIMIT)
+        : [],
+      createdAt,
+    };
+    return folder;
+  }
+
+  let url: string;
+  try {
+    url = normalizeUrl(stringValue(value.url, ''));
+  } catch {
+    return null;
+  }
+  if (!url) return null;
+  const site: FavoriteSite = {
+    kind: 'site',
+    id,
+    name,
+    url,
+    shortcut: stringValue(value.shortcut, '').slice(0, 64),
+    createdAt,
+  };
+  return site;
 }
 
 function normalizeFavorites(value: unknown): Favorite[] {
@@ -137,7 +181,7 @@ function normalizeFavorites(value: unknown): Favorite[] {
   return value
     .map(normalizeFavorite)
     .filter((favorite): favorite is Favorite => favorite !== null)
-    .slice(0, 15);
+    .slice(0, FAVORITE_CARD_LIMIT);
 }
 
 function normalizeTodo(value: unknown): Todo | null {

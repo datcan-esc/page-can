@@ -5,6 +5,7 @@
 ## Özellikler
 
 - İsteğe bağlı isim, favicon ve kullanıcı tanımlı klavye kısayolu içeren favori site kartları
+- Favoriler arasında duran, ekran ortasında blurlu 3×3 çekmece açan ve en fazla dokuz site tutan uygulama klasörleri
 - Son beş yer imini sabit satır ritminde gösteren liste ve aranabilir tam yer imi görünümü
 - Ayarlanabilir geri sayım ve sınırsız sayaç modlarına sahip odak zamanlayıcısı
 - Tarayıcı kapansa veya yeni sekme kapanmış olsa da geri sayımı sürdüren alarm/bildirim sistemi
@@ -52,6 +53,9 @@ Temel bileşen kuralları:
 - `ShortcutField`: kısayol kaydetme, gösterme, açıklama ve `Kaldır` eylemini standartlaştırır.
 - `List` ve `ListItem`: yer imi ve yapılacak satırlarının hizasını ve sağ aksiyon alanını paylaşır.
 - `SegmentedToggle`: az sayıda birbirini dışlayan görünüm veya mod seçeneği için kullanılır.
+- `ChoicePicker`: açıklama gerektiren birbirini dışlayan seçenekleri, ikonlu ve kolay taranabilen seçim kartları olarak sunar.
+
+Favorilerde site, uygulama klasörü ve ekleme hücresi aynı `AppTile` bileşeninin varyantlarıdır. İsim görünürlüğü, ikon yüzeyi ve üç nokta yönetim menüsü hem ana favori kartında hem de klasör çekmecesinde bu bileşen üzerinden yönetilir.
 
 Her temel bileşen kendi klasöründeki CSS dosyasından, her alan bileşeni ise kendi feature CSS dosyasından sorumludur. `entrypoints/newtab/style.css` sadece global stil katmanlarını içe aktarır; component seçicileri burada tutulmaz.
 

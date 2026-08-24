@@ -154,7 +154,7 @@
       </label>
 
       <label class="toggle-row favorite-names-toggle">
-        <span><b>Favori isimlerini göster</b><small>Site adlarını favori ikonlarının altında gösterir.</small></span>
+        <span><b>İkon isimlerini göster</b><small>Favorilerde ve uygulama klasörlerinde adları ikonların altında gösterir.</small></span>
         <input type="checkbox" bind:checked={draft.showFavoriteNames} />
       </label>
 

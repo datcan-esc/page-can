@@ -16,22 +16,20 @@
   gap: 8px 10px;
 }
 
-.favorite-entry {
+.app-tile-entry {
   position: relative;
-  width: 64px;
+  width: 68px;
   height: 100%;
   min-width: 0;
   min-height: 0;
   justify-self: center;
 }
 
-.favorite-grid > .favorite-add {
-  width: 64px;
-  justify-self: center;
+.app-tile-entry--menu-open {
+  z-index: 24;
 }
 
-.favorite-item,
-.button.favorite-item {
+.app-tile {
   display: flex;
   width: 100%;
   height: 100%;
@@ -43,19 +41,27 @@
   gap: 3px;
   padding: 2px 0;
   color: inherit;
+  font: inherit;
   background: transparent;
   border: 0;
   border-radius: 14px;
   cursor: pointer;
 }
 
-.favorite-item:hover,
-.button.favorite-item:hover:not(:disabled) {
+.app-tile:hover,
+.app-tile:focus-visible {
   background: transparent;
-  filter: none;
 }
 
-.favorite-tile {
+.app-tile:focus-visible {
+  outline: none;
+}
+
+.app-tile-entry:not(.show-name) .app-tile {
+  gap: 0;
+}
+
+.app-tile__icon {
   position: relative;
   display: grid;
   width: 58px;
@@ -63,7 +69,7 @@
   flex: 0 0 58px;
   place-items: center;
   overflow: hidden;
-  color: var(--card-muted);
+  color: var(--muted);
   background: var(--surface-soft);
   border: 1px solid var(--separator);
   border-radius: 16px;
@@ -72,13 +78,20 @@
     0 5px 14px rgb(0 0 0 / 8%);
 }
 
-.favorite-item:hover .favorite-tile,
-.favorite-item:focus-visible .favorite-tile {
+.app-tile:hover .app-tile__icon,
+.app-tile:focus-visible .app-tile__icon {
+  color: var(--text);
   background: var(--surface-hover);
   border-color: color-mix(in srgb, var(--text) 14%, transparent);
 }
 
-.favorite-tile img {
+.app-tile:focus-visible .app-tile__icon {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--primary) 82%, white 18%),
+    0 5px 14px rgb(0 0 0 / 8%);
+}
+
+.app-tile__icon > img {
   position: relative;
   z-index: 1;
   width: 28px;
@@ -86,7 +99,7 @@
   object-fit: contain;
 }
 
-.favorite-name {
+.app-tile__name {
   flex: 0 0 auto;
   max-width: 100%;
   overflow: hidden;
@@ -98,62 +111,114 @@
   white-space: nowrap;
 }
 
-.favorites-card:not(.show-names) .favorite-item {
-  gap: 0;
-}
-
-.favorite-item:hover .favorite-name,
-.favorite-item:focus-visible .favorite-name {
+.app-tile:hover .app-tile__name,
+.app-tile:focus-visible .app-tile__name {
   color: var(--text);
 }
 
-.favorite-menu-trigger.icon-button {
-  position: absolute;
-  z-index: 3;
-  top: 3px;
-  right: -20px;
-  width: 24px;
-  height: 24px;
-  min-height: 24px;
+.app-tile--add .app-tile__icon {
   color: var(--muted);
-  border-radius: 8px;
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 3%),
+    0 5px 14px rgb(0 0 0 / 8%);
+}
+
+.app-tile--add:hover .app-tile__icon,
+.app-tile--add:focus-visible .app-tile__icon {
+  color: var(--text);
+}
+
+.app-folder-preview {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.app-folder-preview__slot {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+}
+
+.app-tile__icon .app-folder-preview img,
+.app-tile__icon .app-folder-preview svg {
+  width: 11px;
+  height: 11px;
+  object-fit: contain;
+}
+
+.app-tile__menu-trigger.icon-button {
+  position: absolute;
+  z-index: 4;
+  top: calc(50% - 39px);
+  right: -16px;
+  width: 23px;
+  height: 23px;
+  min-height: 23px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
   opacity: 0;
+  pointer-events: none;
+  box-shadow: none;
 }
 
-.favorites-card:not(.show-names) .favorite-menu-trigger {
-  top: calc(50% - 29px);
+.app-tile-entry:not(.show-name) .app-tile__menu-trigger {
+  top: calc(50% - 33px);
 }
 
-.favorites-card:not(.show-names) .favorite-menu {
-  top: calc(50% - 1px);
+.app-tile-entry:hover .app-tile__menu-trigger {
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+  opacity: 0.76;
+  pointer-events: auto;
 }
 
-.favorite-entry:hover .favorite-menu-trigger,
-.favorite-entry:focus-within .favorite-menu-trigger,
-.favorite-menu-trigger.active {
+.app-tile-entry:hover .app-tile__menu-trigger.icon-button:hover:not(:disabled),
+.app-tile-entry:hover .app-tile__menu-trigger.icon-button:active:not(:disabled),
+.app-tile-entry:hover .app-tile__menu-trigger.active {
+  color: var(--text);
   opacity: 1;
 }
 
-.favorite-menu {
+.app-tile__menu-trigger.icon-button:hover:not(:disabled),
+.app-tile__menu-trigger.icon-button:focus-visible,
+.app-tile__menu-trigger.icon-button:active:not(:disabled) {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+}
+
+.app-tile-menu {
   --text: var(--card-text);
   --muted: var(--card-muted);
   --surface-hover: var(--card-surface-hover);
   position: absolute;
-  z-index: 20;
-  top: 31px;
-  right: -20px;
+  z-index: 30;
+  top: calc(50% + 8px);
+  left: 50%;
   display: grid;
   width: 122px;
   gap: 2px;
   padding: 5px;
   color: var(--text);
-  background: color-mix(in srgb, rgb(var(--card-rgb)) 98%, var(--page-bg));
+  background: color-mix(in srgb, rgb(var(--card-rgb)) 97%, var(--page-bg));
   border: 1px solid var(--card-border);
   border-radius: 12px;
   box-shadow: 0 18px 45px rgb(0 0 0 / 34%);
+  transform: translateX(-50%);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
-.favorite-menu .button {
+.app-tile-menu .button {
   width: 100%;
   min-height: 32px;
   justify-content: flex-start;
@@ -161,23 +226,88 @@
   font-weight: var(--weight-body);
 }
 
-.favorite-entry:nth-child(n + 9) .favorite-menu {
+.app-tile-menu .app-tile-menu__delete:hover {
+  color: var(--danger);
+}
+
+.favorite-grid > .app-tile-entry:nth-child(4n + 1) .app-tile-menu,
+.app-drawer-grid > .app-tile-entry:nth-child(3n + 1) .app-tile-menu {
+  right: auto;
+  left: -2px;
+  transform: none;
+}
+
+.favorite-grid > .app-tile-entry:nth-child(4n) .app-tile-menu,
+.app-drawer-grid > .app-tile-entry:nth-child(3n) .app-tile-menu {
+  right: -2px;
+  left: auto;
+  transform: none;
+}
+
+.favorite-grid > .app-tile-entry:nth-child(n + 9) .app-tile-menu,
+.app-drawer-grid > .app-tile-entry:nth-child(n + 7) .app-tile-menu {
   top: auto;
-  bottom: calc(100% + 1px);
+  bottom: calc(50% + 8px);
 }
 
-.favorites-card:not(.show-names) .favorite-entry:nth-child(n + 9) .favorite-menu {
-  bottom: calc(50% + 33px);
+.favorite-folder-hint {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1.45;
 }
 
-.favorite-add .favorite-tile {
-  color: var(--card-muted);
-  background: var(--surface-soft);
+.app-drawer-layer {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: rgb(0 0 0 / 12%);
+}
+
+.app-drawer-layer.suspended {
+  pointer-events: none;
+}
+
+.app-drawer-card.card {
+  width: min(390px, calc(100vw - 64px), calc(100dvh - 64px));
+  aspect-ratio: 1;
+  padding: 20px;
+  border-radius: 26px;
   box-shadow:
-    inset 0 1px rgb(255 255 255 / 3%),
-    0 5px 14px rgb(0 0 0 / 8%);
+    inset 0 1px rgb(255 255 255 / 4%),
+    0 30px 90px rgb(0 0 0 / 32%);
 }
 
-.favorite-add:hover .favorite-tile {
-  color: var(--card-text);
+.app-drawer-card .card__header {
+  margin-bottom: 12px;
+}
+
+.app-drawer-card .card__header h2 {
+  max-width: calc(100% - 44px);
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-drawer-card .card__body {
+  display: flex;
+  min-height: 0;
+}
+
+.app-drawer-grid {
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.app-drawer-grid > .app-tile-entry {
+  width: 68px;
 }

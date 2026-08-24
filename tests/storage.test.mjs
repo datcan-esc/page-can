@@ -118,6 +118,55 @@ test('storage sınırları ve todo migration', async (t) => {
     }
   });
 
+  await t.test('eski favorileri korur ve uygulama klasörlerini 9 siteyle sınırlar', async () => {
+    const folderApps = Array.from({ length: 11 }, (_, index) => ({
+      id: `app-${index}`,
+      name: `Uygulama ${index}`,
+      url: `app${index}.example.com`,
+      createdAt: index,
+    }));
+    const harness = await createStorageHarness({
+      local: {
+        favorites: [
+          {
+            id: 'legacy-site',
+            name: 'Eski favori',
+            url: 'example.com',
+            shortcut: 'E',
+            createdAt: 1,
+          },
+          {
+            kind: 'folder',
+            id: 'folder',
+            name: 'Araçlar',
+            apps: folderApps,
+            createdAt: 2,
+          },
+        ],
+      },
+    });
+    try {
+      const favorites = await harness.storage.loadFavorites();
+      assert.deepEqual(favorites[0], {
+        kind: 'site',
+        id: 'legacy-site',
+        name: 'Eski favori',
+        url: 'https://example.com/',
+        shortcut: 'E',
+        createdAt: 1,
+      });
+      assert.equal(favorites[1].kind, 'folder');
+      assert.equal(favorites[1].apps.length, 9);
+      assert.equal(favorites[1].apps[0].url, 'https://app0.example.com/');
+
+      await harness.storage.saveFavorites(favorites);
+      assert.equal(harness.state.local.favorites[0].kind, 'site');
+      assert.equal(harness.state.local.favorites[1].apps.length, 9);
+    } finally {
+      await harness.close();
+    }
+  });
+
   await t.test('eski todo listesini aktif ve tamamlanan anahtarlarına taşır', async () => {
     const harness = await createStorageHarness({
       local: {

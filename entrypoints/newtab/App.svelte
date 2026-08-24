@@ -3,6 +3,8 @@
   import { browser } from 'wxt/browser';
   import BookmarkCard from '../../components/bookmarks/BookmarkCard.svelte';
   import BookmarksDialog from '../../components/bookmarks/BookmarksDialog.svelte';
+  import AppDrawer from '../../components/favorites/AppDrawer.svelte';
+  import FolderAppDialog from '../../components/favorites/FolderAppDialog.svelte';
   import FavoriteDialog from '../../components/favorites/FavoriteDialog.svelte';
   import FavoriteGrid from '../../components/favorites/FavoriteGrid.svelte';
   import FocusCard from '../../components/focus/FocusCard.svelte';
@@ -19,6 +21,7 @@
   import IconButton from '../../components/ui/IconButton.svelte';
   import { loadAllBookmarks, loadRecentBookmarks, removeBookmark } from '../../lib/bookmarks';
   import { DEFAULT_TIMER } from '../../lib/defaults';
+  import { FAVORITE_CARD_LIMIT, FOLDER_APP_LIMIT } from '../../lib/display-limits';
   import {
     durationForMode,
     requestCompletion,
@@ -50,6 +53,9 @@
     BookmarkItem,
     DailyStat,
     Favorite,
+    FavoriteFolder,
+    FavoriteSite,
+    FolderApp,
     MediaPreferences,
     PomodoroPreferences,
     PomodoroState,
@@ -67,7 +73,7 @@
   export let initialSettings: AppSettings;
   export let initialError = '';
 
-  type DialogName = 'appearance' | 'favorite' | 'bookmarks' | 'todos' | 'pomodoro' | 'media' | 'stats';
+  type DialogName = 'appearance' | 'favorite' | 'folder-app' | 'bookmarks' | 'todos' | 'pomodoro' | 'media' | 'stats';
 
   let settings = initialSettings;
   let favorites: Favorite[] = [];
@@ -91,6 +97,9 @@
   let appError = initialError;
   let activeDialog: DialogName | null = null;
   let editingFavorite: Favorite | null = null;
+  let activeFolderId = '';
+  let editingFolderId = '';
+  let editingFolderApp: FolderApp | null = null;
   let wallpaperUrl = '';
   let hasWallpaper = false;
   let clockInterval: number | undefined;
@@ -106,6 +115,11 @@
   });
   let dateLabel = dateFormatter.format(new Date());
   let timeLabel = timeFormatter.format(new Date());
+
+  $: activeFolder = favorites.find((item): item is FavoriteFolder =>
+    item.kind === 'folder' && item.id === activeFolderId) ?? null;
+  $: favoriteShortcuts = favorites.flatMap((favorite) =>
+    favorite.kind === 'site' && favorite.shortcut ? [favorite.shortcut] : []);
 
   function updateClock() {
     const now = new Date();
@@ -158,7 +172,7 @@
 
   async function saveFavorite(favorite: Favorite) {
     const exists = favorites.some((item) => item.id === favorite.id);
-    if (!exists && favorites.length >= 15) return;
+    if (!exists && favorites.length >= FAVORITE_CARD_LIMIT) return;
     const next = exists
       ? favorites.map((item) => item.id === favorite.id ? favorite : item)
       : [...favorites, favorite];
@@ -168,8 +182,51 @@
   async function deleteFavorite(favorite: Favorite) {
     try {
       await updateFavorites(favorites.filter((item) => item.id !== favorite.id));
+      if (favorite.id === activeFolderId) activeFolderId = '';
     } catch (error) {
       reportError(error, 'Favori silinemedi.');
+    }
+  }
+
+  function openAppDrawer(folder: FavoriteFolder) {
+    activeFolderId = folder.id;
+  }
+
+  function openFolderAppDialog(folder: FavoriteFolder, app: FolderApp | null = null) {
+    editingFolderId = folder.id;
+    editingFolderApp = app;
+    activeDialog = 'folder-app';
+  }
+
+  function closeFolderAppDialog() {
+    activeDialog = null;
+    editingFolderId = '';
+    editingFolderApp = null;
+  }
+
+  async function saveFolderApp(app: FolderApp) {
+    const folder = favorites.find((item): item is FavoriteFolder =>
+      item.kind === 'folder' && item.id === editingFolderId);
+    if (!folder) throw new Error('Uygulama klasörü bulunamadı.');
+
+    const exists = folder.apps.some((item) => item.id === app.id);
+    if (!exists && folder.apps.length >= FOLDER_APP_LIMIT) {
+      throw new Error('Bir uygulama klasörüne en fazla 9 site eklenebilir.');
+    }
+    const apps = exists
+      ? folder.apps.map((item) => item.id === app.id ? app : item)
+      : [...folder.apps, app];
+    await saveFavorite({ ...folder, apps });
+  }
+
+  async function deleteFolderApp(folder: FavoriteFolder, app: FolderApp) {
+    try {
+      await saveFavorite({
+        ...folder,
+        apps: folder.apps.filter((item) => item.id !== app.id),
+      });
+    } catch (error) {
+      reportError(error, 'Uygulama klasörden silinemedi.');
     }
   }
 
@@ -359,7 +416,8 @@
       target?.isContentEditable ||
       event.isComposing ||
       event.repeat ||
-      activeDialog
+      activeDialog ||
+      activeFolderId
     ) return;
 
     const pressed = eventShortcut(event);
@@ -373,7 +431,8 @@
       return;
     }
 
-    const favorite = favorites.find((item) => item.shortcut && item.shortcut === pressed);
+    const favorite = favorites.find((item): item is FavoriteSite =>
+      item.kind === 'site' && Boolean(item.shortcut) && item.shortcut === pressed);
     if (favorite) {
       event.preventDefault();
       window.location.assign(favorite.url);
@@ -385,7 +444,13 @@
   ) {
     const tasks: Promise<void>[] = [];
     if (changes[storageKeys.favorites]) {
-      tasks.push(loadFavorites().then((value) => { favorites = value; }));
+      tasks.push(loadFavorites().then((value) => {
+        favorites = value;
+        if (activeFolderId && !value.some((item) => item.kind === 'folder' && item.id === activeFolderId)) {
+          activeFolderId = '';
+          if (activeDialog === 'folder-app') closeFolderAppDialog();
+        }
+      }));
     }
     if (changes[storageKeys.activeTodos] || changes[storageKeys.legacyTodos]) {
       tasks.push(loadActiveTodos().then((value) => { activeTodos = value; }));
@@ -516,6 +581,7 @@
           {favorites}
           showNames={settings.theme.showFavoriteNames}
           onAdd={() => openFavoriteDialog()}
+          onOpenFolder={openAppDrawer}
           onEdit={openFavoriteDialog}
           onDelete={(favorite) => void deleteFavorite(favorite)}
         />
@@ -558,11 +624,32 @@
   </div>
 {/if}
 
+{#if activeFolder}
+  <AppDrawer
+    folder={activeFolder}
+    showNames={settings.theme.showFavoriteNames}
+    suspended={Boolean(activeDialog)}
+    onClose={() => (activeFolderId = '')}
+    onAdd={() => openFolderAppDialog(activeFolder)}
+    onEdit={(app) => openFolderAppDialog(activeFolder, app)}
+    onDelete={(app) => void deleteFolderApp(activeFolder, app)}
+  />
+{/if}
+
 {#if appError}
   <div class="app-notice" role="alert">
     <span>{appError}</span>
     <button type="button" onclick={() => (appError = '')}>Kapat</button>
   </div>
+{/if}
+
+{#if activeDialog === 'folder-app' && activeFolder}
+  <FolderAppDialog
+    app={editingFolderApp}
+    folderName={activeFolder.name}
+    onClose={closeFolderAppDialog}
+    onSave={saveFolderApp}
+  />
 {/if}
 
 {#if activeDialog === 'appearance'}
@@ -612,7 +699,7 @@
 {#if activeDialog === 'pomodoro'}
   <FocusSettingsDialog
     preferences={settings.pomodoro}
-    favoriteShortcuts={favorites.map((favorite) => favorite.shortcut).filter(Boolean)}
+    {favoriteShortcuts}
     reservedShortcuts={[settings.media.shortcut].filter(Boolean)}
     onClose={() => (activeDialog = null)}
     onSave={updatePomodoroPreferences}
@@ -624,7 +711,7 @@
     preferences={settings.media}
     reservedShortcuts={[
       settings.pomodoro.shortcut,
-      ...favorites.map((favorite) => favorite.shortcut),
+      ...favoriteShortcuts,
     ].filter(Boolean)}
     onClose={() => (activeDialog = null)}
     onSave={updateMediaPreferences}
