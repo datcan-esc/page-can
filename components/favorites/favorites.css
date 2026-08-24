@@ -266,6 +266,8 @@
   place-items: center;
   padding: 32px;
   background: rgb(0 0 0 / 12%);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
 }
 
 .app-drawer-layer.suspended {
