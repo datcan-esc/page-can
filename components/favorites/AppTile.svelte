@@ -109,7 +109,7 @@
       aria-haspopup="menu"
       onclick={toggleMenu}
     >
-      <Icon name="more" size={15} />
+      <Icon name="more" size={16} />
     </IconButton>
 
     {#if menuOpen}

@@ -169,43 +169,20 @@
   position: absolute;
   z-index: 4;
   top: calc(50% - 39px);
-  right: -16px;
-  width: 23px;
-  height: 23px;
-  min-height: 23px;
-  padding: 0;
-  color: var(--muted);
-  background: transparent;
-  border: 0;
+  right: -24px;
   opacity: 0;
   pointer-events: none;
-  box-shadow: none;
 }
 
 .app-tile-entry:not(.show-name) .app-tile__menu-trigger {
   top: calc(50% - 33px);
 }
 
-.app-tile-entry:hover .app-tile__menu-trigger {
-  color: color-mix(in srgb, var(--muted) 78%, var(--text));
-  opacity: 0.76;
-  pointer-events: auto;
-}
-
-.app-tile-entry:hover .app-tile__menu-trigger.icon-button:hover:not(:disabled),
-.app-tile-entry:hover .app-tile__menu-trigger.icon-button:active:not(:disabled),
-.app-tile-entry:hover .app-tile__menu-trigger.active {
-  color: var(--text);
+.app-tile-entry:hover .app-tile__menu-trigger,
+.app-tile-entry:focus-within .app-tile__menu-trigger,
+.app-tile__menu-trigger.active {
   opacity: 1;
-}
-
-.app-tile__menu-trigger.icon-button:hover:not(:disabled),
-.app-tile__menu-trigger.icon-button:focus-visible,
-.app-tile__menu-trigger.icon-button:active:not(:disabled) {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  filter: none;
+  pointer-events: auto;
 }
 
 .app-tile-menu {
