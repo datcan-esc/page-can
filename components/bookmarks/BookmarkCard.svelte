@@ -28,8 +28,8 @@
   </svelte:fragment>
 
   <List class="bookmark-list">
-    {#each bookmarks as bookmark (bookmark.id)}
-      <BookmarkRow {bookmark} {onRemove} />
+    {#each bookmarks as bookmark, index (bookmark.id)}
+      <BookmarkRow {bookmark} {onRemove} divider={index < bookmarks.length - 1} />
     {:else}
       <div class="bookmark-empty">
         <span class="bookmark-empty__icon"><Icon name="bookmark" size={21} /></span>

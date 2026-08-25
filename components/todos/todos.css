@@ -81,18 +81,6 @@
 
 .todo-row.list-item {
   gap: 9px;
-  border-bottom: 0;
-}
-
-.todo-motion:not(:last-child) .todo-row::after {
-  position: absolute;
-  right: 3px;
-  bottom: 0;
-  left: 3px;
-  height: 1px;
-  background: var(--separator);
-  content: '';
-  pointer-events: none;
 }
 
 .todo-row.expanded {

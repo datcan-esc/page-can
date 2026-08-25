@@ -55,7 +55,7 @@ Temel bileşen kuralları:
 - Yapılacak ekleme ve inline düzenleme aynı `TodoTextField` bileşenini kullanır: alan içerikle birlikte en fazla dört satıra kadar büyür, metin 500 karakterle sınırlıdır, `Enter` ekler/kaydeder, `Shift+Enter` yeni satır açar, düzenlemede odak kaybı kaydeder ve `Escape` değişikliği iptal eder. Liste tek satırlı bir özet gösterir; tıklanan görev satır sonları korunarak tam metne açılır.
 - `ShortcutField`: kısayol kaydetme, gösterme, açıklama ve `Kaldır` eylemini standartlaştırır.
 - `ShortcutHint`: seçilen gösterme tuşu basılıyken farklı kartlardaki kısayolları aynı kompakt `<kbd>` yüzeyiyle gösterir.
-- `List` ve `ListItem`: yer imi ve yapılacak satırlarının hizasını ve sağ aksiyon alanını paylaşır.
+- `List` ve `ListItem`: yer imi ve yapılacak satırlarının hizasını, sağ aksiyon alanını ve ortak inset divider sözleşmesini paylaşır.
 - `SegmentedToggle`: az sayıda birbirini dışlayan görünüm veya mod seçeneği için kullanılır.
 - `ChoicePicker`: açıklama gerektiren birbirini dışlayan seçenekleri, ikonlu ve kolay taranabilen seçim kartları olarak sunar.
 

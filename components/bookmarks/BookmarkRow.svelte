@@ -9,9 +9,10 @@
 
   export let bookmark: BookmarkItem;
   export let onRemove: (bookmark: BookmarkItem) => void;
+  export let divider = false;
 </script>
 
-<ListItem class="bookmark-row">
+<ListItem class="bookmark-row" {divider}>
   <a class="bookmark-link" href={bookmark.url} aria-label={`${bookmark.title} sayfasını aç`}>
     <span class="bookmark-favicon">
       <Favicon url={bookmark.url} requestSize={32} iconSize={16} />

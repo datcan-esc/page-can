@@ -48,8 +48,8 @@
     <div class="modal-empty" role="status">Yer imleri yükleniyor…</div>
   {:else}
     <List class="expanded-list">
-      {#each visible as bookmark (bookmark.id)}
-        <BookmarkRow {bookmark} {onRemove} />
+      {#each visible as bookmark, index (bookmark.id)}
+        <BookmarkRow {bookmark} {onRemove} divider={index < visible.length - 1} />
       {:else}
         <div class="modal-empty">Aramana uygun bir yer imi bulunamadı.</div>
       {/each}

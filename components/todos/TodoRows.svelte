@@ -88,13 +88,14 @@
 </script>
 
 <List class="todo-rows">
-  {#each todos as todo (todo.id)}
+  {#each todos as todo, index (todo.id)}
     <div
       class="todo-motion"
       animate:flip={{ duration: motionDuration }}
       out:slide={{ duration: motionDuration, axis: 'y' }}
     >
       <ListItem
+        divider={index < todos.length - 1}
         expanded={editingId === todo.id || expandedId === todo.id}
         muted={todo.completed}
         class={`todo-row${todo.completed ? ' completed' : ''}${editingId === todo.id ? ' editing' : ''}`}
