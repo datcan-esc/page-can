@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import type { FolderApp } from '../../lib/types';
   import Button from '../ui/Button.svelte';
   import Favicon from '../ui/Favicon.svelte';
@@ -41,6 +42,9 @@
   export let onDragEnter: () => void = () => undefined;
   export let onDrop: () => void = () => undefined;
   export let onDragEnd: () => void = () => undefined;
+
+  let dragPreview: HTMLElement | null = null;
+  let dragPreviewFrame: number | null = null;
 
   $: accessibleName = variant === 'folder'
     ? `${name} uygulama klasörünü aç`
@@ -87,6 +91,63 @@
     onMoveNext();
   }
 
+  function removeDragPreview() {
+    if (dragPreviewFrame !== null) window.cancelAnimationFrame(dragPreviewFrame);
+    dragPreviewFrame = null;
+    dragPreview?.remove();
+    dragPreview = null;
+  }
+
+  function setDragPreview(event: DragEvent) {
+    if (!event.dataTransfer || !(event.currentTarget instanceof HTMLElement)) return;
+
+    removeDragPreview();
+    const source = event.currentTarget;
+    const rect = source.getBoundingClientRect();
+    const preview = source.cloneNode(true) as HTMLElement;
+    preview.classList.remove(
+      'app-tile-entry--dragging',
+      'app-tile-entry--drop-target',
+      'app-tile-entry--menu-open',
+    );
+    preview.classList.add('app-tile-drag-preview');
+    preview.removeAttribute('draggable');
+    preview.setAttribute('aria-hidden', 'true');
+    preview.inert = true;
+    preview.querySelectorAll(
+      '.app-tile__menu-trigger, .app-tile-menu, .app-tile__shortcut-hint',
+    ).forEach((element) => element.remove());
+    preview.style.width = `${rect.width}px`;
+    preview.style.height = `${rect.height}px`;
+    preview.style.left = `${rect.left}px`;
+    preview.style.top = `${rect.top}px`;
+
+    const computedStyle = window.getComputedStyle(source);
+    for (const property of [
+      '--text',
+      '--muted',
+      '--surface-soft',
+      '--surface-hover',
+      '--separator',
+    ]) {
+      preview.style.setProperty(property, computedStyle.getPropertyValue(property));
+    }
+
+    document.body.append(preview);
+    dragPreview = preview;
+    void preview.offsetWidth;
+    const offsetX = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+    const offsetY = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+    event.dataTransfer.setDragImage(preview, offsetX, offsetY);
+    dragPreviewFrame = window.requestAnimationFrame(() => {
+      if (dragPreview === preview) {
+        preview.style.left = '-240px';
+        preview.style.top = '-240px';
+      }
+      dragPreviewFrame = null;
+    });
+  }
+
   function startDragging(event: DragEvent) {
     const target = event.target as HTMLElement | null;
     if (!reorderable || target?.closest('.app-tile__menu-trigger, .app-tile-menu')) {
@@ -96,6 +157,7 @@
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', name);
+      setDragPreview(event);
     }
     onDragStart();
   }
@@ -118,6 +180,13 @@
     event.stopPropagation();
     onDrop();
   }
+
+  function finishDragging() {
+    removeDragPreview();
+    onDragEnd();
+  }
+
+  onDestroy(removeDragPreview);
 </script>
 
 <div
@@ -133,7 +202,7 @@
   ondragenter={enterDragTarget}
   ondragover={allowDrop}
   ondrop={drop}
-  ondragend={onDragEnd}
+  ondragend={finishDragging}
 >
   {#if variant === 'site'}
     <a
