@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Input from '../ui/Input.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
   import ShortcutHint from '../ui/ShortcutHint.svelte';
+  import TodoTextField from './TodoTextField.svelte';
   import './todos.css';
 
   export let onAdd: (title: string) => void;
@@ -12,7 +12,7 @@
   export let focusRequest = 0;
 
   let value = '';
-  let inputField: Input;
+  let inputField: TodoTextField;
   let handledFocusRequest = focusRequest;
 
   $: if (focusRequest !== handledFocusRequest) {
@@ -20,22 +20,29 @@
     inputField?.focus();
   }
 
-  function submit() {
-    const title = value.trim();
+  function submit(title: string) {
     if (!title) return;
     onAdd(title);
     value = '';
   }
 </script>
 
-<form class="todo-composer" onsubmit={(event) => { event.preventDefault(); submit(); }}>
-  <Input bind:this={inputField} bind:value maxLength={160} {placeholder} aria-label="Yeni yapılacak">
+<form class="todo-composer" onsubmit={(event) => { event.preventDefault(); inputField.commit(); }}>
+  <TodoTextField
+    bind:this={inputField}
+    bind:value
+    {placeholder}
+    ariaLabel="Yeni yapılacak"
+    instruction="Enter ile ekle. Shift+Enter ile yeni satır ekle."
+    onCommit={submit}
+    trailing
+  >
     <svelte:fragment slot="trailing">
       <IconButton label="Görevi ekle" variant="ghost" type="submit" class="todo-submit" disabled={!value.trim()}>
         <Icon name="arrow-up" size={15} strokeWidth={2.2} />
       </IconButton>
     </svelte:fragment>
-  </Input>
+  </TodoTextField>
   <ShortcutHint
     {shortcut}
     visible={showShortcutHints}

@@ -2,6 +2,7 @@
   import { flip } from 'svelte/animate';
   import { onMount, tick } from 'svelte';
   import { slide } from 'svelte/transition';
+  import { normalizeTodoText } from '../../lib/todos';
   import type { Todo } from '../../lib/types';
   import Button from '../ui/Button.svelte';
   import Icon from '../ui/Icon.svelte';
@@ -9,6 +10,7 @@
   import List from '../ui/List.svelte';
   import ListItem from '../ui/ListItem.svelte';
   import ListLimitNote from '../ui/ListLimitNote.svelte';
+  import TodoTextField from './TodoTextField.svelte';
   import './todos.css';
 
   export let todos: Todo[];
@@ -20,7 +22,7 @@
   let editingId = '';
   let editingTitle = '';
   let expandedId = '';
-  let editingInput: HTMLInputElement | undefined;
+  let editingInput: TodoTextField | undefined;
   let motionDuration = 170;
 
   onMount(() => {
@@ -28,13 +30,18 @@
   });
 
   function toggle(todo: Todo) {
-    onChange(todos.map((item) => item.id === todo.id
-      ? {
-          ...item,
-          completed: !item.completed,
-          completedAt: !item.completed ? Date.now() : undefined,
-        }
-      : item));
+    const pendingTitle = editingId === todo.id ? normalizeTodoText(editingTitle) : '';
+    onChange(todos.map((item) => {
+      if (item.id !== todo.id) return item;
+      const completed = !item.completed;
+      return {
+        ...item,
+        ...(pendingTitle ? { title: pendingTitle } : {}),
+        completed,
+        completedAt: completed ? Date.now() : undefined,
+      };
+    }));
+    if (editingId === todo.id) cancelEdit();
   }
 
   function toggleExpanded(todo: Todo) {
@@ -46,13 +53,12 @@
     editingId = todo.id;
     editingTitle = todo.title;
     await tick();
-    editingInput?.focus();
-    editingInput?.select();
+    editingInput?.focusAtEnd();
   }
 
-  function finishEdit() {
+  function finishEdit(value = editingTitle) {
     if (!editingId) return;
-    const title = editingTitle.trim();
+    const title = normalizeTodoText(value);
     if (title) {
       onChange(todos.map((item) => item.id === editingId ? { ...item, title } : item));
     }
@@ -68,6 +74,7 @@
   }
 
   function remove(id: string) {
+    if (editingId === id) cancelEdit();
     onChange(todos.filter((item) => item.id !== id));
   }
 
@@ -88,7 +95,7 @@
       out:slide={{ duration: motionDuration, axis: 'y' }}
     >
       <ListItem
-        expanded={editingId !== todo.id && expandedId === todo.id}
+        expanded={editingId === todo.id || expandedId === todo.id}
         muted={todo.completed}
         class={`todo-row${todo.completed ? ' completed' : ''}${editingId === todo.id ? ' editing' : ''}`}
       >
@@ -97,6 +104,9 @@
             variant="ghost"
             class="todo-check"
             aria-label={todo.completed ? 'Yapılacaklara geri taşı' : 'Tamamlandı olarak işaretle'}
+            onmousedown={(event: MouseEvent) => {
+              if (editingId === todo.id) event.preventDefault();
+            }}
             onclick={() => toggle(todo)}
           >
             {#if todo.completed}<Icon name="check" size={13} strokeWidth={2.5} />{/if}
@@ -104,24 +114,15 @@
         </svelte:fragment>
 
         {#if editingId === todo.id}
-          <input
+          <TodoTextField
             bind:this={editingInput}
-            class="todo-edit-input"
             bind:value={editingTitle}
-            type="text"
-            maxlength={160}
-            onkeydown={(event: KeyboardEvent) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                finishEdit();
-              }
-              if (event.key === 'Escape') {
-                event.preventDefault();
-                cancelEdit();
-              }
-            }}
-            onblur={finishEdit}
-            aria-label="Yapılacak başlığını düzenle"
+            class="todo-edit-field"
+            ariaLabel="Yapılacak metnini düzenle"
+            instruction="Enter ile kaydet. Shift+Enter ile yeni satır ekle. Escape ile vazgeç."
+            onCommit={finishEdit}
+            onCancel={cancelEdit}
+            commitOnBlur
           />
         {:else}
           <Button
@@ -146,7 +147,14 @@
           >
             <Icon name={editingId === todo.id ? 'check' : 'edit'} size={14} strokeWidth={editingId === todo.id ? 2.4 : 1.8} />
           </IconButton>
-          <IconButton variant="ghost" label="Sil" onclick={() => remove(todo.id)}>
+          <IconButton
+            variant="ghost"
+            label="Sil"
+            onmousedown={(event: MouseEvent) => {
+              if (editingId === todo.id) event.preventDefault();
+            }}
+            onclick={() => remove(todo.id)}
+          >
             <Icon name="close" size={14} />
           </IconButton>
         </svelte:fragment>

@@ -1,6 +1,7 @@
 import { browser } from 'wxt/browser';
 import { DEFAULT_SETTINGS, DEFAULT_TIMER } from './defaults';
 import { FAVORITE_CARD_LIMIT, FOLDER_APP_LIMIT } from './display-limits';
+import { normalizeTodoText } from './todos';
 import type {
   AppSettings,
   DailyStat,
@@ -199,7 +200,7 @@ function normalizeFavorites(value: unknown): Favorite[] {
 function normalizeTodo(value: unknown): Todo | null {
   if (!isRecord(value)) return null;
   const id = stringValue(value.id, '');
-  const title = stringValue(value.title, '').trim().slice(0, 160);
+  const title = normalizeTodoText(stringValue(value.title, ''));
   if (!id || !title) return null;
   const completed = booleanValue(value.completed, false);
   const completedAt = typeof value.completedAt === 'number' && Number.isFinite(value.completedAt)

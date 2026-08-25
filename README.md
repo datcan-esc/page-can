@@ -52,6 +52,7 @@ Temel bileşen kuralları:
 - `Card`: padding, başlık, sağ üst aksiyon ve footer ritmini tek noktadan yönetir; favoriler ve saat alanı da aynı yüzey sistemini kullanır.
 - `Dialog`: başlık ile subtitle'ı dikey ayraçla aynı satırda, kapatma ve varsa `Vazgeç / Kaydet` eylemlerini ortak düzende gösterir.
 - `Input`: metin, URL, sayı, arama ve çok satırlı girişlerin ikon, placeholder, focus ve trailing aksiyon davranışını yönetir.
+- Yapılacak ekleme ve inline düzenleme aynı `TodoTextField` bileşenini kullanır: alan içerikle birlikte en fazla dört satıra kadar büyür, metin 500 karakterle sınırlıdır, `Enter` ekler/kaydeder, `Shift+Enter` yeni satır açar, düzenlemede odak kaybı kaydeder ve `Escape` değişikliği iptal eder. Liste tek satırlı bir özet gösterir; tıklanan görev satır sonları korunarak tam metne açılır.
 - `ShortcutField`: kısayol kaydetme, gösterme, açıklama ve `Kaldır` eylemini standartlaştırır.
 - `ShortcutHint`: seçilen gösterme tuşu basılıyken farklı kartlardaki kısayolları aynı kompakt `<kbd>` yüzeyiyle gösterir.
 - `List` ve `ListItem`: yer imi ve yapılacak satırlarının hizasını ve sağ aksiyon alanını paylaşır.

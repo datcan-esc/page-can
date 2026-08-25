@@ -25,12 +25,14 @@ async function createStorageHarness(initialState = {}) {
   });
 
   const storage = await server.ssrLoadModule('/lib/storage.ts');
+  const todos = await server.ssrLoadModule('/lib/todos.ts');
   const utils = await server.ssrLoadModule('/lib/utils.ts');
   const bookmarks = await server.ssrLoadModule('/lib/bookmarks.ts');
   return {
     state,
     bookmarks,
     storage,
+    todos,
     utils,
     async close() {
       await server.close();
@@ -233,6 +235,21 @@ test('storage sınırları ve todo migration', async (t) => {
       assert.equal('todos' in harness.state.local, false);
       assert.deepEqual(harness.state.local.activeTodos.map((todo) => todo.id), ['active']);
       assert.deepEqual(harness.state.local.completedTodos.map((todo) => todo.id), ['done']);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('uzun ve çok satırlı todo metnini ortak kurala göre normalize eder', async () => {
+    const harness = await createStorageHarness();
+    try {
+      const normalized = harness.todos.normalizeTodoText(
+        `  İlk satır  \r\nİkinci satır\n\n\n${'x'.repeat(600)}  `,
+      );
+      assert.equal(normalized.startsWith('İlk satır\nİkinci satır\n\n'), true);
+      assert.equal(normalized.includes('\r'), false);
+      assert.equal(normalized.includes('\n\n\n'), false);
+      assert.equal(normalized.length, harness.todos.TODO_TEXT_MAX_LENGTH);
     } finally {
       await harness.close();
     }
