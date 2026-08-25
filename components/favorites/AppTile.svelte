@@ -25,10 +25,22 @@
   export let menuEnabled = false;
   export let menuOpen = false;
   export let focusOnOpen = false;
+  export let reorderable = false;
+  export let dragging = false;
+  export let dropTarget = false;
+  export let activationDisabled = false;
+  export let canMovePrevious = false;
+  export let canMoveNext = false;
   export let onActivate: () => void = () => undefined;
   export let onMenuToggle: () => void = () => undefined;
   export let onEdit: () => void = () => undefined;
   export let onDelete: () => void = () => undefined;
+  export let onMovePrevious: () => void = () => undefined;
+  export let onMoveNext: () => void = () => undefined;
+  export let onDragStart: () => void = () => undefined;
+  export let onDragEnter: () => void = () => undefined;
+  export let onDrop: () => void = () => undefined;
+  export let onDragEnd: () => void = () => undefined;
 
   $: accessibleName = variant === 'folder'
     ? `${name} uygulama klasörünü aç`
@@ -53,12 +65,75 @@
     event.stopPropagation();
     onDelete();
   }
+
+  function activate(event: MouseEvent) {
+    if (activationDisabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (variant !== 'site') onActivate();
+  }
+
+  function movePrevious(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    onMovePrevious();
+  }
+
+  function moveNext(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    onMoveNext();
+  }
+
+  function startDragging(event: DragEvent) {
+    const target = event.target as HTMLElement | null;
+    if (!reorderable || target?.closest('.app-tile__menu-trigger, .app-tile-menu')) {
+      event.preventDefault();
+      return;
+    }
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', name);
+    }
+    onDragStart();
+  }
+
+  function enterDragTarget(event: DragEvent) {
+    if (!reorderable) return;
+    event.preventDefault();
+    onDragEnter();
+  }
+
+  function allowDrop(event: DragEvent) {
+    if (!reorderable) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  }
+
+  function drop(event: DragEvent) {
+    if (!reorderable) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onDrop();
+  }
 </script>
 
 <div
   class:show-name={showName}
   class:app-tile-entry--menu-open={menuOpen}
+  class:app-tile-entry--reorderable={reorderable}
+  class:app-tile-entry--dragging={dragging}
+  class:app-tile-entry--drop-target={dropTarget}
   class="app-tile-entry app-tile-entry--{variant}"
+  role="group"
+  draggable={reorderable}
+  ondragstart={startDragging}
+  ondragenter={enterDragTarget}
+  ondragover={allowDrop}
+  ondrop={drop}
+  ondragend={onDragEnd}
 >
   {#if variant === 'site'}
     <a
@@ -67,6 +142,7 @@
       aria-label={ariaLabel || accessibleName}
       title={title || undefined}
       data-drawer-focus={focusOnOpen ? '' : undefined}
+      onclick={activate}
     >
       <span class="app-tile__icon">
         <Favicon {url} requestSize={64} iconSize={22} />
@@ -77,7 +153,7 @@
     <button
       type="button"
       class="app-tile app-tile--{variant}"
-      onclick={onActivate}
+      onclick={activate}
       {disabled}
       aria-label={ariaLabel || accessibleName}
       title={title || (disabled ? 'Favori sınırına ulaştın' : undefined)}
@@ -114,6 +190,24 @@
 
     {#if menuOpen}
       <div class="app-tile-menu" role="menu" aria-label={`${name} yönetimi`}>
+        {#if reorderable}
+          <Button
+            variant="ghost"
+            role="menuitem"
+            disabled={!canMovePrevious}
+            onclick={movePrevious}
+          >
+            <Icon name="arrow-left" size={14} /> Bir önceye taşı
+          </Button>
+          <Button
+            variant="ghost"
+            role="menuitem"
+            disabled={!canMoveNext}
+            onclick={moveNext}
+          >
+            <Icon name="arrow-right" size={14} /> Bir sonraya taşı
+          </Button>
+        {/if}
         <Button variant="ghost" role="menuitem" onclick={edit}>
           <Icon name="edit" size={14} /> Düzenle
         </Button>

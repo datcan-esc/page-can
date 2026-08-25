@@ -17,9 +17,13 @@
   export let onAdd: () => void;
   export let onEdit: (app: FolderApp) => void;
   export let onDelete: (app: FolderApp) => void;
+  export let onReorder: (sourceId: string, targetId: string) => void;
 
   let layer: HTMLElement;
   let menuId = '';
+  let draggedId = '';
+  let dropTargetId = '';
+  let activationDisabled = false;
   const focusableSelector = 'button:not([disabled]), a[href]';
 
   onMount(() => {
@@ -79,6 +83,37 @@
   function toggleMenu(id: string) {
     menuId = menuId === id ? '' : id;
   }
+
+  function startDragging(id: string) {
+    menuId = '';
+    draggedId = id;
+    dropTargetId = '';
+    activationDisabled = true;
+  }
+
+  function enterDragTarget(id: string) {
+    if (!draggedId) return;
+    dropTargetId = id === draggedId ? '' : id;
+  }
+
+  function finishDragging() {
+    draggedId = '';
+    dropTargetId = '';
+    window.setTimeout(() => { activationDisabled = false; }, 0);
+  }
+
+  function dropOn(id: string) {
+    const sourceId = draggedId;
+    finishDragging();
+    if (sourceId && sourceId !== id) onReorder(sourceId, id);
+  }
+
+  function moveAdjacent(id: string, offset: -1 | 1) {
+    const index = folder.apps.findIndex((app) => app.id === id);
+    const target = folder.apps[index + offset];
+    menuId = '';
+    if (target) onReorder(id, target.id);
+  }
 </script>
 
 <svelte:window
@@ -114,8 +149,20 @@
           showName={showNames}
           menuEnabled
           menuOpen={menuId === app.id}
+          reorderable={folder.apps.length > 1}
+          dragging={draggedId === app.id}
+          dropTarget={dropTargetId === app.id}
+          {activationDisabled}
+          canMovePrevious={index > 0}
+          canMoveNext={index < folder.apps.length - 1}
           focusOnOpen={index === 0}
           onMenuToggle={() => toggleMenu(app.id)}
+          onMovePrevious={() => moveAdjacent(app.id, -1)}
+          onMoveNext={() => moveAdjacent(app.id, 1)}
+          onDragStart={() => startDragging(app.id)}
+          onDragEnter={() => enterDragTarget(app.id)}
+          onDrop={() => dropOn(app.id)}
+          onDragEnd={finishDragging}
           onEdit={() => { menuId = ''; onEdit(app); }}
           onDelete={() => { menuId = ''; onDelete(app); }}
         />

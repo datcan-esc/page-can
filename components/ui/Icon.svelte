@@ -1,5 +1,7 @@
 <script lang="ts">
   import {
+    ArrowLeft,
+    ArrowRight,
     ArrowUp,
     Bookmark,
     ChartNoAxesColumnIncreasing,
@@ -42,6 +44,8 @@
     sliders: SlidersHorizontal,
     plus: Plus,
     arrow: ChevronRight,
+    'arrow-left': ArrowLeft,
+    'arrow-right': ArrowRight,
     'arrow-up': ArrowUp,
     play: Play,
     pause: Pause,

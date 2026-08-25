@@ -58,7 +58,7 @@ Temel bileşen kuralları:
 - `SegmentedToggle`: az sayıda birbirini dışlayan görünüm veya mod seçeneği için kullanılır.
 - `ChoicePicker`: açıklama gerektiren birbirini dışlayan seçenekleri, ikonlu ve kolay taranabilen seçim kartları olarak sunar.
 
-Favorilerde site, uygulama klasörü ve ekleme hücresi aynı `AppTile` bileşeninin varyantlarıdır. İsim görünürlüğü, ikon yüzeyi ve üç nokta yönetim menüsü hem ana favori kartında hem de klasör çekmecesinde bu bileşen üzerinden yönetilir.
+Favorilerde site, uygulama klasörü ve ekleme hücresi aynı `AppTile` bileşeninin varyantlarıdır. İsim görünürlüğü, ikon yüzeyi ve üç nokta yönetim menüsü hem ana favori kartında hem de klasör çekmecesinde bu bileşen üzerinden yönetilir. Ana favoriler ve klasör uygulamaları sürükle-bırakla veya yönetim menüsündeki taşıma eylemleriyle yeniden sıralanabilir.
 
 Her temel bileşen kendi klasöründeki CSS dosyasından, her alan bileşeni ise kendi feature CSS dosyasından sorumludur. `entrypoints/newtab/style.css` sadece global stil katmanlarını içe aktarır; component seçicileri burada tutulmaz.
 

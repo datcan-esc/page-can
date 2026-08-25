@@ -29,6 +29,27 @@
   z-index: 24;
 }
 
+.app-tile-entry--reorderable .app-tile {
+  cursor: grab;
+}
+
+.app-tile-entry--reorderable:active .app-tile,
+.app-tile-entry--dragging .app-tile {
+  cursor: grabbing;
+}
+
+.app-tile-entry--dragging {
+  z-index: 3;
+  opacity: 0.38;
+}
+
+.app-tile-entry--drop-target .app-tile__icon {
+  border-color: color-mix(in srgb, var(--primary) 78%, white 22%);
+  outline: 3px solid color-mix(in srgb, var(--primary) 24%, transparent);
+  outline-offset: 1px;
+  box-shadow: 0 5px 14px rgb(0 0 0 / 8%);
+}
+
 .app-tile {
   display: flex;
   width: 100%;
@@ -194,7 +215,7 @@
   top: calc(50% + 8px);
   left: 50%;
   display: grid;
-  width: 122px;
+  width: 164px;
   gap: 2px;
   padding: 5px;
   color: var(--text);

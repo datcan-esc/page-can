@@ -95,6 +95,23 @@ test('storage sınırları ve todo migration', async (t) => {
     }
   });
 
+  await t.test('öğeleri kimlikleriyle yeniden sıralar', async () => {
+    const harness = await createStorageHarness();
+    try {
+      const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+      const movedForward = harness.utils.moveItemById(items, 'a', 'c');
+      const movedBackward = harness.utils.moveItemById(items, 'd', 'b');
+
+      assert.deepEqual(movedForward.map((item) => item.id), ['b', 'c', 'a', 'd']);
+      assert.deepEqual(movedBackward.map((item) => item.id), ['a', 'd', 'b', 'c']);
+      assert.deepEqual(items.map((item) => item.id), ['a', 'b', 'c', 'd']);
+      assert.equal(harness.utils.moveItemById(items, 'missing', 'b'), items);
+      assert.equal(harness.utils.moveItemById(items, 'b', 'b'), items);
+    } finally {
+      await harness.close();
+    }
+  });
+
   await t.test('geçersiz ayarları güvenli varsayılanlara çevirir', async () => {
     const harness = await createStorageHarness();
     try {

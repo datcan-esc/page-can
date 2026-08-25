@@ -60,7 +60,13 @@
     PomodoroState,
     Todo,
   } from '../../lib/types';
-  import { eventShortcut, localMonthRange, localWeekRange, singleKeyFromEvent } from '../../lib/utils';
+  import {
+    eventShortcut,
+    localMonthRange,
+    localWeekRange,
+    moveItemById,
+    singleKeyFromEvent,
+  } from '../../lib/utils';
   import {
     analyzeWallpaper,
     getWallpaper,
@@ -194,6 +200,16 @@
     }
   }
 
+  async function reorderFavorites(sourceId: string, targetId: string) {
+    const next = moveItemById(favorites, sourceId, targetId);
+    if (next === favorites) return;
+    try {
+      await updateFavorites(next);
+    } catch (error) {
+      reportError(error, 'Favorilerin sırası kaydedilemedi.');
+    }
+  }
+
   function openAppDrawer(folder: FavoriteFolder) {
     activeFolderId = folder.id;
   }
@@ -233,6 +249,16 @@
       });
     } catch (error) {
       reportError(error, 'Uygulama klasörden silinemedi.');
+    }
+  }
+
+  async function reorderFolderApps(folder: FavoriteFolder, sourceId: string, targetId: string) {
+    const apps = moveItemById(folder.apps, sourceId, targetId);
+    if (apps === folder.apps) return;
+    try {
+      await saveFavorite({ ...folder, apps });
+    } catch (error) {
+      reportError(error, 'Klasördeki uygulamaların sırası kaydedilemedi.');
     }
   }
 
@@ -641,6 +667,7 @@
           onOpenFolder={openAppDrawer}
           onEdit={openFavoriteDialog}
           onDelete={(favorite) => void deleteFavorite(favorite)}
+          onReorder={(sourceId, targetId) => void reorderFavorites(sourceId, targetId)}
         />
         <BookmarkCard
           bookmarks={recentBookmarks}
@@ -696,6 +723,7 @@
     onAdd={() => openFolderAppDialog(activeFolder)}
     onEdit={(app) => openFolderAppDialog(activeFolder, app)}
     onDelete={(app) => void deleteFolderApp(activeFolder, app)}
+    onReorder={(sourceId, targetId) => void reorderFolderApps(activeFolder, sourceId, targetId)}
   />
 {/if}
 
