@@ -1,7 +1,16 @@
 import { browser } from 'wxt/browser';
 import { DEFAULT_SETTINGS, DEFAULT_TIMER } from './defaults';
 import { FAVORITE_CARD_LIMIT, FOLDER_APP_LIMIT } from './display-limits';
-import { normalizeTodoText } from './todos';
+import { normalizeScratchpadText } from './scratchpad';
+import {
+  TODO_TAG_LIMIT,
+  TODO_TAGS_PER_TODO_LIMIT,
+  isValidTodoTagName,
+  normalizeTodoTagName,
+  normalizeTodoText,
+  todoTagColor,
+  todoTagKey,
+} from './todos';
 import type {
   AppSettings,
   DailyStat,
@@ -13,6 +22,7 @@ import type {
   PomodoroState,
   TimerRecovery,
   Todo,
+  TodoTag,
 } from './types';
 import { localDateKey, normalizeUrl } from './utils';
 
@@ -21,8 +31,10 @@ const LOCAL_FAVORITES_KEY = 'favorites';
 const LEGACY_LOCAL_TODOS_KEY = 'todos';
 const LOCAL_ACTIVE_TODOS_KEY = 'activeTodos';
 const LOCAL_COMPLETED_TODOS_KEY = 'completedTodos';
+const LOCAL_TODO_TAGS_KEY = 'todoTags';
 const LOCAL_TIMER_KEY = 'pomodoroState';
 const LOCAL_STATS_KEY = 'dailyStats';
+const LOCAL_SCRATCHPAD_KEY = 'scratchpadText';
 export const FOCUS_STATS_RETENTION_DAYS = 31;
 
 type UnknownRecord = Record<string, unknown>;
@@ -209,6 +221,11 @@ function normalizeTodo(value: unknown): Todo | null {
   const todo: Todo = {
     id,
     title,
+    tagIds: Array.isArray(value.tagIds)
+      ? [...new Set(value.tagIds.filter((tagId): tagId is string =>
+        typeof tagId === 'string' && Boolean(tagId)))]
+        .slice(0, TODO_TAGS_PER_TODO_LIMIT)
+      : [],
     completed,
     createdAt: finiteNumber(value.createdAt, 0, 0),
   };
@@ -219,6 +236,32 @@ function normalizeTodo(value: unknown): Todo | null {
 function normalizeTodos(value: unknown): Todo[] {
   if (!Array.isArray(value)) return [];
   return value.map(normalizeTodo).filter((todo): todo is Todo => todo !== null);
+}
+
+function normalizeTodoTag(value: unknown): TodoTag | null {
+  if (!isRecord(value)) return null;
+  const id = stringValue(value.id, '');
+  const name = normalizeTodoTagName(stringValue(value.name, ''));
+  if (!id || !isValidTodoTagName(name)) return null;
+  return {
+    id,
+    name,
+    color: colorValue(value.color, todoTagColor(name)),
+    createdAt: finiteNumber(value.createdAt, 0, 0),
+  };
+}
+
+export function normalizeTodoTags(value: unknown): TodoTag[] {
+  if (!Array.isArray(value)) return [];
+  const ids = new Set<string>();
+  const names = new Set<string>();
+  return value.flatMap((candidate) => {
+    const tag = normalizeTodoTag(candidate);
+    if (!tag || ids.has(tag.id) || names.has(todoTagKey(tag.name))) return [];
+    ids.add(tag.id);
+    names.add(todoTagKey(tag.name));
+    return [tag];
+  }).slice(0, TODO_TAG_LIMIT);
 }
 
 function normalizeTimer(value: unknown): PomodoroState {
@@ -397,14 +440,32 @@ export async function loadCompletedTodos(): Promise<Todo[]> {
   return normalizeTodos(result[LOCAL_COMPLETED_TODOS_KEY]).filter((todo) => todo.completed);
 }
 
-export async function saveActiveTodos(todos: Todo[]): Promise<void> {
+export async function loadTodoTags(): Promise<TodoTag[]> {
+  const result = await browser.storage.local.get(LOCAL_TODO_TAGS_KEY);
+  return normalizeTodoTags(result[LOCAL_TODO_TAGS_KEY]);
+}
+
+function todoTagStorageUpdate(tags?: TodoTag[]): Record<string, TodoTag[]> {
+  return tags ? { [LOCAL_TODO_TAGS_KEY]: normalizeTodoTags(tags) } : {};
+}
+
+export async function saveTodoTags(tags: TodoTag[]): Promise<void> {
+  await browser.storage.local.set(todoTagStorageUpdate(tags));
+}
+
+export async function saveActiveTodos(todos: Todo[], tags?: TodoTag[]): Promise<void> {
   await ensureTodoStorage();
   await browser.storage.local.set({
     [LOCAL_ACTIVE_TODOS_KEY]: normalizeTodos(todos).filter((todo) => !todo.completed),
+    ...todoTagStorageUpdate(tags),
   });
 }
 
-export async function moveTodosToCompleted(activeTodos: Todo[], completedTodos: Todo[]): Promise<void> {
+export async function moveTodosToCompleted(
+  activeTodos: Todo[],
+  completedTodos: Todo[],
+  tags?: TodoTag[],
+): Promise<void> {
   await ensureTodoStorage();
   const result = await browser.storage.local.get(LOCAL_COMPLETED_TODOS_KEY);
   const storedCompleted = normalizeTodos(result[LOCAL_COMPLETED_TODOS_KEY])
@@ -421,14 +482,20 @@ export async function moveTodosToCompleted(activeTodos: Todo[], completedTodos: 
       ...storedCompleted.filter((todo) => !additionIds.has(todo.id)),
       ...additions,
     ],
+    ...todoTagStorageUpdate(tags),
   });
 }
 
-export async function saveTodoBuckets(activeTodos: Todo[], completedTodos: Todo[]): Promise<void> {
+export async function saveTodoBuckets(
+  activeTodos: Todo[],
+  completedTodos: Todo[],
+  tags?: TodoTag[],
+): Promise<void> {
   await ensureTodoStorage();
   await browser.storage.local.set({
     [LOCAL_ACTIVE_TODOS_KEY]: normalizeTodos(activeTodos).filter((todo) => !todo.completed),
     [LOCAL_COMPLETED_TODOS_KEY]: normalizeTodos(completedTodos).filter((todo) => todo.completed),
+    ...todoTagStorageUpdate(tags),
   });
 }
 
@@ -463,12 +530,25 @@ export async function saveStats(stats: DailyStat[]): Promise<void> {
   });
 }
 
+export async function loadScratchpadText(): Promise<string> {
+  const result = await browser.storage.local.get(LOCAL_SCRATCHPAD_KEY);
+  return normalizeScratchpadText(result[LOCAL_SCRATCHPAD_KEY]);
+}
+
+export async function saveScratchpadText(text: string): Promise<void> {
+  await browser.storage.local.set({
+    [LOCAL_SCRATCHPAD_KEY]: normalizeScratchpadText(text),
+  });
+}
+
 export const storageKeys = {
   settings: SYNC_SETTINGS_KEY,
   favorites: LOCAL_FAVORITES_KEY,
   legacyTodos: LEGACY_LOCAL_TODOS_KEY,
   activeTodos: LOCAL_ACTIVE_TODOS_KEY,
   completedTodos: LOCAL_COMPLETED_TODOS_KEY,
+  todoTags: LOCAL_TODO_TAGS_KEY,
   timer: LOCAL_TIMER_KEY,
   stats: LOCAL_STATS_KEY,
+  scratchpad: LOCAL_SCRATCHPAD_KEY,
 } as const;

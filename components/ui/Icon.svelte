@@ -8,6 +8,7 @@
     Check,
     ChevronRight,
     CircleCheckBig,
+    Copy,
     EllipsisVertical,
     ExternalLink,
     Focus,
@@ -31,6 +32,7 @@
     Square,
     Timer,
     Trash2,
+    Type,
     X,
   } from '@lucide/svelte';
 
@@ -53,6 +55,7 @@
     reset: RotateCcw,
     check: Check,
     'check-circle': CircleCheckBig,
+    copy: Copy,
     edit: Pencil,
     close: X,
     search: Search,
@@ -69,6 +72,7 @@
     chart: ChartNoAxesColumnIncreasing,
     sparkles: Sparkles,
     trash: Trash2,
+    text: Type,
     music: Music2,
     previous: SkipBack,
     next: SkipForward,

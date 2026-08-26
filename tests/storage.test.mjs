@@ -25,12 +25,14 @@ async function createStorageHarness(initialState = {}) {
   });
 
   const storage = await server.ssrLoadModule('/lib/storage.ts');
+  const scratchpad = await server.ssrLoadModule('/lib/scratchpad.ts');
   const todos = await server.ssrLoadModule('/lib/todos.ts');
   const utils = await server.ssrLoadModule('/lib/utils.ts');
   const bookmarks = await server.ssrLoadModule('/lib/bookmarks.ts');
   return {
     state,
     bookmarks,
+    scratchpad,
     storage,
     todos,
     utils,
@@ -250,6 +252,107 @@ test('storage sınırları ve todo migration', async (t) => {
       assert.equal(normalized.includes('\r'), false);
       assert.equal(normalized.includes('\n\n\n'), false);
       assert.equal(normalized.length, harness.todos.TODO_TEXT_MAX_LENGTH);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('todo taslağının yalnızca başındaki birden fazla etiketi ayırır', async () => {
+    const harness = await createStorageHarness();
+    try {
+      assert.deepEqual(
+        harness.todos.parseTodoDraft('#Page-Can #Bug  Bildirim hatasını düzelt'),
+        { title: 'Bildirim hatasını düzelt', tagNames: ['Page-Can', 'Bug'] },
+      );
+      assert.deepEqual(
+        harness.todos.parseTodoDraft('#İş #iş Raporu hazırla'),
+        { title: 'Raporu hazırla', tagNames: ['İş'] },
+      );
+      assert.deepEqual(
+        harness.todos.parseTodoDraft('Rapor içinde #iş ifadesini kullan'),
+        { title: 'Rapor içinde #iş ifadesini kullan', tagNames: [] },
+      );
+      assert.equal(
+        harness.todos.todoTagColor('PAGE-CAN'),
+        harness.todos.todoTagColor('page-can'),
+      );
+      const longTitle = 'x'.repeat(600);
+      const longDraft = harness.todos.parseTodoDraft(`#uzun #metin ${longTitle}`);
+      assert.deepEqual(longDraft.tagNames, ['uzun', 'metin']);
+      assert.equal(longDraft.title.length, harness.todos.TODO_TEXT_MAX_LENGTH);
+
+      const resolved = harness.todos.resolveTodoTags(['İş', 'Yeni'], [
+        { id: 'work', name: 'iş', color: '#123456', createdAt: 1 },
+      ], 2);
+      assert.equal(resolved.tags.length, 2);
+      assert.deepEqual(resolved.tagIds[0], 'work');
+      assert.equal(resolved.tags[1].name, 'Yeni');
+      assert.equal(resolved.tags[1].createdAt, 2);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('etiket önerisini yalnızca taslağın öndeki etiket alanında açar', async () => {
+    const harness = await createStorageHarness();
+    try {
+      assert.deepEqual(
+        harness.todos.todoTagTriggerAt('#pa', 3),
+        { start: 0, end: 3, query: 'pa' },
+      );
+      assert.deepEqual(
+        harness.todos.todoTagTriggerAt('#iş #ac', 7),
+        { start: 4, end: 7, query: 'ac' },
+      );
+      assert.equal(harness.todos.todoTagTriggerAt('Görev #iş', 9), null);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('etiketleri kalıcı kayıtta normalize eder ve todo ile birlikte saklar', async () => {
+    const harness = await createStorageHarness({
+      local: {
+        todoTags: [
+          { id: 'work', name: 'İş', color: '#123456', createdAt: 1 },
+          { id: 'duplicate', name: 'iş', color: 'red', createdAt: 2 },
+          { id: '', name: 'Geçersiz', color: '#abcdef', createdAt: 3 },
+        ],
+      },
+    });
+    try {
+      const tags = await harness.storage.loadTodoTags();
+      assert.equal(tags.length, 1);
+      assert.equal(tags[0].id, 'work');
+      assert.equal(tags[0].color, '#123456');
+
+      await harness.storage.saveActiveTodos([
+        {
+          id: 'task',
+          title: 'Raporu hazırla',
+          tagIds: ['work', 'work'],
+          completed: false,
+          createdAt: 4,
+        },
+      ], tags);
+      assert.deepEqual(harness.state.local.activeTodos[0].tagIds, ['work']);
+      assert.deepEqual(harness.state.local.todoTags.map((tag) => tag.id), ['work']);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('metin alanını yerelde saklar ve 3.000 kelimeyle sınırlar', async () => {
+    const harness = await createStorageHarness();
+    try {
+      const longText = `${Array.from({ length: 3_010 }, (_, index) => `kelime-${index}`).join(' ')}\r\nson`;
+      await harness.storage.saveScratchpadText(longText);
+
+      const stored = await harness.storage.loadScratchpadText();
+      assert.equal(harness.scratchpad.countScratchpadWords(stored), 3_000);
+      assert.equal(stored.includes('\r'), false);
+      assert.equal(harness.state.local.scratchpadText, stored);
+      assert.equal(harness.storage.storageKeys.scratchpad, 'scratchpadText');
     } finally {
       await harness.close();
     }

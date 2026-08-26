@@ -16,7 +16,7 @@
 - Otomatik duraklatılan oturumun bitiş saatini düzeltme, devam ettirme veya kaydetmeden silme
 - Haftanın en yüksek gününe göre saat çizgileri üreten, gerçek geçen süreyi kaydeden haftalık ve aylık odak istatistikleri
 - Aylık görünümden hatalı günlük odak toplamını düzenleme veya silme
-- Yapılacaklar ve tamamlananlar görünümleri, inline düzenleme ve tam liste ekranı
+- Kalıcı ve renk kodlu çoklu etiketler, klavye kontrollü etiket önerileri ve filtrelerle birlikte yapılacaklar/tamamlananlar görünümleri
 - Açık, koyu ve sistem teması
 - Vurgu, yüksek kontrastlı secondary metin, kart ve isteğe bağlı border rengi
 - Kart opaklığı ve blur ayarı
@@ -52,7 +52,7 @@ Temel bileşen kuralları:
 - `Card`: padding, başlık, sağ üst aksiyon ve footer ritmini tek noktadan yönetir; favoriler ve saat alanı da aynı yüzey sistemini kullanır.
 - `Dialog`: başlık ile subtitle'ı dikey ayraçla aynı satırda, kapatma ve varsa `Vazgeç / Kaydet` eylemlerini ortak düzende gösterir.
 - `Input`: metin, URL, sayı, arama ve çok satırlı girişlerin ikon, placeholder, focus ve trailing aksiyon davranışını yönetir.
-- Yapılacak ekleme ve inline düzenleme aynı `TodoTextField` bileşenini kullanır: alan içerikle birlikte en fazla dört satıra kadar büyür, metin 500 karakterle sınırlıdır, `Enter` ekler/kaydeder, `Shift+Enter` yeni satır açar, düzenlemede odak kaybı kaydeder ve `Escape` değişikliği iptal eder. Liste tek satırlı bir özet gösterir; tıklanan görev satır sonları korunarak tam metne açılır.
+- Yapılacak ekleme ve inline düzenleme aynı `TodoTextField` bileşenini kullanır: alan içerikle birlikte en fazla dört satıra kadar büyür, görev metni 500 karakterle sınırlıdır, baştaki `#etiket` ifadeleri kalıcı etiketlere dönüştürülür, `Enter` ekler/kaydeder, `Shift+Enter` yeni satır açar, düzenlemede odak kaybı kaydeder ve `Escape` değişikliği iptal eder. Liste tek satırlı bir özet ve renkli etiket badge'leri gösterir; tıklanan görev satır sonları korunarak tam metne açılır.
 - `ShortcutField`: kısayol kaydetme, gösterme, açıklama ve `Kaldır` eylemini standartlaştırır.
 - `ShortcutHint`: seçilen gösterme tuşu basılıyken farklı kartlardaki kısayolları aynı kompakt `<kbd>` yüzeyiyle gösterir.
 - `List` ve `ListItem`: yer imi ve yapılacak satırlarının hizasını, sağ aksiyon alanını ve ortak inset divider sözleşmesini paylaşır.
@@ -112,7 +112,7 @@ npm run zip
 | Veri | Saklama alanı |
 | --- | --- |
 | Tema, pomodoro ve medya kısayolu | `chrome.storage.sync` |
-| Favoriler, aktif/tamamlanan görevler, timer ve istatistikler | `chrome.storage.local` |
+| Favoriler, aktif/tamamlanan görevler, kalıcı todo etiketleri, timer ve istatistikler | `chrome.storage.local` |
 | Optimize edilmiş wallpaper | IndexedDB |
 | Tarayıcı yer imleri | Yalnızca `chrome.bookmarks` üzerinden okunur |
 

@@ -84,9 +84,17 @@ export interface FavoriteFolder {
 
 export type Favorite = FavoriteSite | FavoriteFolder;
 
+export interface TodoTag {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: number;
+}
+
 export interface Todo {
   id: string;
   title: string;
+  tagIds: string[];
   completed: boolean;
   createdAt: number;
   completedAt?: number;

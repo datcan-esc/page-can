@@ -11,6 +11,7 @@
   import FocusSettingsDialog from '../../components/focus/FocusSettingsDialog.svelte';
   import MediaPlayer from '../../components/media/MediaPlayer.svelte';
   import MediaSettingsDialog from '../../components/media/MediaSettingsDialog.svelte';
+  import ScratchpadDialog from '../../components/scratchpad/ScratchpadDialog.svelte';
   import SettingsDialog from '../../components/settings/SettingsDialog.svelte';
   import ClockCard from '../../components/shell/ClockCard.svelte';
   import StatsCard from '../../components/stats/StatsCard.svelte';
@@ -28,19 +29,23 @@
     requestTimerReconciliation,
     toggleTimer,
   } from '../../lib/pomodoro';
+  import { normalizeScratchpadText } from '../../lib/scratchpad';
   import { setDailyFocusSeconds } from '../../lib/stats';
   import {
     loadActiveTodos,
     loadCompletedTodos,
     loadFavorites,
+    loadScratchpadText,
     loadSettings,
     loadStats,
     loadStatsRange,
     loadTimer,
+    loadTodoTags,
     moveTodosToCompleted,
     normalizeSettings,
     saveActiveTodos,
     saveFavorites,
+    saveScratchpadText,
     saveSettings,
     saveTimer,
     saveTodoBuckets,
@@ -59,6 +64,7 @@
     PomodoroPreferences,
     PomodoroState,
     Todo,
+    TodoTag,
   } from '../../lib/types';
   import {
     eventShortcut,
@@ -78,12 +84,23 @@
   export let initialSettings: AppSettings;
   export let initialError = '';
 
-  type DialogName = 'settings' | 'favorite' | 'folder-app' | 'bookmarks' | 'todos' | 'pomodoro' | 'media' | 'stats';
+  type DialogName =
+    | 'settings'
+    | 'scratchpad'
+    | 'favorite'
+    | 'folder-app'
+    | 'bookmarks'
+    | 'todos'
+    | 'pomodoro'
+    | 'media'
+    | 'stats';
 
   let settings = initialSettings;
   let favorites: Favorite[] = [];
   let activeTodos: Todo[] = [];
   let completedTodos: Todo[] = [];
+  let todoTags: TodoTag[] = [];
+  let selectedTodoTagId = '';
   let completedTodosLoaded = false;
   let timer: PomodoroState = { ...DEFAULT_TIMER };
   let weeklyStats: DailyStat[] = [];
@@ -98,6 +115,7 @@
   let todosLoadVersion = 0;
   let statsLoadVersion = 0;
   let todoOperationQueue: Promise<void> = Promise.resolve();
+  let scratchpadSaveQueue: Promise<void> = Promise.resolve();
   let loaded = false;
   let appError = initialError;
   let activeDialog: DialogName | null = null;
@@ -110,6 +128,15 @@
   let shortcutHintKeyHeld = false;
   let todoFocusRequest = 0;
   let clockInterval: number | undefined;
+  let scratchpadText = '';
+  let savedScratchpadText = '';
+  let scratchpadSaveState: 'saving' | 'saved' | 'error' = 'saved';
+  let scratchpadSaveTimer: number | undefined;
+  let scratchpadPendingSaves = 0;
+
+  $: if (selectedTodoTagId && !todoTags.some((tag) => tag.id === selectedTodoTagId)) {
+    selectedTodoTagId = '';
+  }
 
   const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
     weekday: 'long',
@@ -128,6 +155,7 @@
   $: favoriteShortcuts = favorites.flatMap((favorite) =>
     favorite.shortcut ? [favorite.shortcut] : []);
   $: showShortcutHints = shortcutHintKeyHeld && !activeDialog;
+  $: hasScratchpadContent = Boolean(scratchpadText.trim());
   $: globalActionShortcuts = [
     settings.shortcuts.revealKey,
     settings.shortcuts.todoFocus,
@@ -145,6 +173,64 @@
 
   function reportError(error: unknown, fallback: string) {
     appError = errorMessage(error, fallback);
+  }
+
+  function updateScratchpadText(next: string) {
+    scratchpadText = normalizeScratchpadText(next);
+    if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
+    scratchpadSaveTimer = undefined;
+
+    if (scratchpadText === savedScratchpadText && scratchpadPendingSaves === 0) {
+      scratchpadSaveState = 'saved';
+      return;
+    }
+
+    scratchpadSaveState = 'saving';
+    scratchpadSaveTimer = window.setTimeout(() => {
+      scratchpadSaveTimer = undefined;
+      void persistScratchpadText();
+    }, 400);
+  }
+
+  async function persistScratchpadText() {
+    if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
+    scratchpadSaveTimer = undefined;
+    const snapshot = scratchpadText;
+
+    if (snapshot === savedScratchpadText && scratchpadPendingSaves === 0) {
+      scratchpadSaveState = 'saved';
+      return;
+    }
+
+    scratchpadPendingSaves += 1;
+    const operation = scratchpadSaveQueue.then(() => saveScratchpadText(snapshot));
+    scratchpadSaveQueue = operation.catch(() => undefined);
+
+    try {
+      await operation;
+      savedScratchpadText = snapshot;
+    } catch (error) {
+      reportError(error, 'Metin alanı kaydedilemedi.');
+      if (scratchpadText === snapshot) scratchpadSaveState = 'error';
+      return;
+    } finally {
+      scratchpadPendingSaves -= 1;
+    }
+
+    if (scratchpadText === savedScratchpadText && scratchpadPendingSaves === 0) {
+      scratchpadSaveState = 'saved';
+    } else {
+      scratchpadSaveState = 'saving';
+    }
+  }
+
+  function closeScratchpadDialog() {
+    activeDialog = null;
+    void persistScratchpadText();
+  }
+
+  function handlePageHide() {
+    void persistScratchpadText();
   }
 
   async function refreshRecentBookmarks() {
@@ -282,12 +368,12 @@
     return result;
   }
 
-  function updateActiveTodos(next: Todo[]): Promise<void> {
+  function updateActiveTodos(next: Todo[], nextTags = todoTags): Promise<void> {
     return queueTodoOperation(async () => {
       const nextActive = next.filter((todo) => !todo.completed);
       const newlyCompleted = next.filter((todo) => todo.completed);
       if (newlyCompleted.length) {
-        await moveTodosToCompleted(nextActive, newlyCompleted);
+        await moveTodosToCompleted(nextActive, newlyCompleted, nextTags);
         if (completedTodosLoaded) {
           const completedIds = new Set(newlyCompleted.map((todo) => todo.id));
           completedTodos = [
@@ -296,19 +382,21 @@
           ];
         }
       } else {
-        await saveActiveTodos(nextActive);
+        await saveActiveTodos(nextActive, nextTags);
       }
       activeTodos = nextActive;
+      todoTags = nextTags;
     });
   }
 
-  function updateAllTodos(next: Todo[]): Promise<void> {
+  function updateAllTodos(next: Todo[], nextTags = todoTags): Promise<void> {
     return queueTodoOperation(async () => {
       const nextActive = next.filter((todo) => !todo.completed);
       const nextCompleted = next.filter((todo) => todo.completed);
-      await saveTodoBuckets(nextActive, nextCompleted);
+      await saveTodoBuckets(nextActive, nextCompleted, nextTags);
       activeTodos = nextActive;
       completedTodos = nextCompleted;
+      todoTags = nextTags;
     });
   }
 
@@ -536,6 +624,9 @@
     if (completedTodosLoaded && changes[storageKeys.completedTodos]) {
       tasks.push(loadCompletedTodos().then((value) => { completedTodos = value; }));
     }
+    if (changes[storageKeys.todoTags]) {
+      tasks.push(loadTodoTags().then((value) => { todoTags = value; }));
+    }
     if (changes[storageKeys.timer]) {
       tasks.push(loadTimer().then((value) => { timer = value; }));
     }
@@ -544,6 +635,20 @@
         weeklyStats = statsInRange(value, localWeekRange());
         if (monthlyStatsLoaded) monthlyStats = statsInRange(value, localMonthRange());
       }));
+    }
+    const scratchpadChange = changes[storageKeys.scratchpad];
+    if (scratchpadChange) {
+      const incoming = normalizeScratchpadText(scratchpadChange.newValue);
+      if (
+        scratchpadPendingSaves === 0
+        && (scratchpadText === savedScratchpadText || incoming === scratchpadText)
+      ) {
+        if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
+        scratchpadSaveTimer = undefined;
+        scratchpadText = incoming;
+        savedScratchpadText = incoming;
+        scratchpadSaveState = 'saved';
+      }
     }
     await Promise.all(tasks);
   }
@@ -587,17 +692,24 @@
       const results = await Promise.allSettled([
         loadFavorites(),
         loadActiveTodos(),
+        loadTodoTags(),
         loadTimer(),
         loadStatsRange(localWeekRange()),
         loadRecentBookmarks(),
+        loadScratchpadText(),
         refreshWallpaper(),
       ]);
 
       applyInitialResult(results[0], (value) => { favorites = value; });
       applyInitialResult(results[1], (value) => { activeTodos = value; });
-      applyInitialResult(results[2], (value) => { timer = value; });
-      applyInitialResult(results[3], (value) => { weeklyStats = value; });
-      applyInitialResult(results[4], (value) => { recentBookmarks = value; });
+      applyInitialResult(results[2], (value) => { todoTags = value; });
+      applyInitialResult(results[3], (value) => { timer = value; });
+      applyInitialResult(results[4], (value) => { weeklyStats = value; });
+      applyInitialResult(results[5], (value) => { recentBookmarks = value; });
+      applyInitialResult(results[6], (value) => {
+        scratchpadText = value;
+        savedScratchpadText = value;
+      });
       markInitialLoadErrors(results);
       loaded = true;
 
@@ -615,6 +727,7 @@
     window.addEventListener('keydown', handleGlobalKeydown);
     window.addEventListener('keyup', handleGlobalKeyup);
     window.addEventListener('blur', hideShortcutHints);
+    window.addEventListener('pagehide', handlePageHide);
     browser.storage.onChanged.addListener(handleStorageChanges);
     browser.bookmarks.onCreated.addListener(handleBookmarksChanged);
     browser.bookmarks.onRemoved.addListener(handleBookmarksChanged);
@@ -626,12 +739,15 @@
     window.removeEventListener('keydown', handleGlobalKeydown);
     window.removeEventListener('keyup', handleGlobalKeyup);
     window.removeEventListener('blur', hideShortcutHints);
+    window.removeEventListener('pagehide', handlePageHide);
     browser.storage.onChanged.removeListener(handleStorageChanges);
     browser.bookmarks.onCreated.removeListener(handleBookmarksChanged);
     browser.bookmarks.onRemoved.removeListener(handleBookmarksChanged);
     browser.bookmarks.onChanged.removeListener(handleBookmarksChanged);
     browser.bookmarks.onMoved.removeListener(handleBookmarksChanged);
     if (clockInterval) window.clearInterval(clockInterval);
+    if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
+    void persistScratchpadText();
     if (wallpaperUrl) URL.revokeObjectURL(wallpaperUrl);
   });
 </script>
@@ -652,9 +768,19 @@
   <main class:has-wallpaper={hasWallpaper} class="page-shell">
     <header class="topbar">
       <ClockCard time={timeLabel} date={dateLabel} />
-      <IconButton label="Ayarları aç" title="Ayarlar" class="settings-button" onclick={() => (activeDialog = 'settings')}>
-        <Icon name="sliders" size={17} />
-      </IconButton>
+      <div class="topbar-actions">
+        <IconButton
+          label="Metin alanını aç"
+          title="Metin alanı"
+          class={`settings-button scratchpad-button ${hasScratchpadContent ? 'scratchpad-button--filled' : ''}`}
+          onclick={() => (activeDialog = 'scratchpad')}
+        >
+          <Icon name="text" size={17} />
+        </IconButton>
+        <IconButton label="Ayarları aç" title="Ayarlar" class="settings-button" onclick={() => (activeDialog = 'settings')}>
+          <Icon name="sliders" size={17} />
+        </IconButton>
+      </div>
     </header>
 
     <div class="dashboard-grid">
@@ -695,13 +821,16 @@
         />
         <TodoCard
           todos={activeTodos}
+          tags={todoTags}
+          selectedTagId={selectedTodoTagId}
           shortcut={settings.shortcuts.todoFocus}
           {showShortcutHints}
           focusRequest={todoFocusRequest}
-          onChange={(next) => {
-            void updateActiveTodos(next)
+          onChange={(next, nextTags) => {
+            void updateActiveTodos(next, nextTags ?? todoTags)
               .catch((error) => reportError(error, 'Görevler kaydedilemedi.'));
           }}
+          onFilterChange={(tagId) => (selectedTodoTagId = tagId)}
           onShowAll={() => void openTodosDialog()}
         />
       </div>
@@ -757,6 +886,16 @@
   />
 {/if}
 
+{#if activeDialog === 'scratchpad'}
+  <ScratchpadDialog
+    text={scratchpadText}
+    saveState={scratchpadSaveState}
+    onChange={updateScratchpadText}
+    onClose={closeScratchpadDialog}
+    onCopyError={(error) => reportError(error, 'Metin panoya kopyalanamadı.')}
+  />
+{/if}
+
 {#if activeDialog === 'favorite'}
   <FavoriteDialog
     favorite={editingFavorite}
@@ -783,10 +922,17 @@
 {#if activeDialog === 'todos'}
   <TodosDialog
     todos={[...activeTodos, ...(completedTodosLoaded ? completedTodos : [])]}
+    tags={todoTags}
+    selectedTagId={selectedTodoTagId}
     loading={todosLoading}
+    tagManagementReady={completedTodosLoaded}
     onClose={closeTodosDialog}
-    onChange={(next) => {
-      const persist = completedTodosLoaded ? updateAllTodos(next) : updateActiveTodos(next);
+    onFilterChange={(tagId) => (selectedTodoTagId = tagId)}
+    onChange={(next, nextTags) => {
+      const tags = nextTags ?? todoTags;
+      const persist = completedTodosLoaded
+        ? updateAllTodos(next, tags)
+        : updateActiveTodos(next, tags);
       void persist
         .catch((error) => reportError(error, 'Görevler kaydedilemedi.'));
     }}

@@ -42,6 +42,10 @@
   export function select() {
     (multiline ? textareaElement : inputElement)?.select();
   }
+
+  export function setSelectionRange(start: number, end = start) {
+    (multiline ? textareaElement : inputElement)?.setSelectionRange(start, end);
+  }
 </script>
 
 <div
@@ -97,5 +101,6 @@
     {#if $$slots.trailing}<div class="input-control__trailing"><slot name="trailing" /></div>{/if}
   </div>
 
+  {#if $$slots.default}<slot />{/if}
   {#if description}<small class="input-field__description">{description}</small>{/if}
 </div>

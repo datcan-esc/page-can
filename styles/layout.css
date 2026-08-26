@@ -47,6 +47,41 @@
   justify-content: space-between;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scratchpad-button {
+  position: relative;
+}
+
+.scratchpad-button--filled.icon-button.button--outlined {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface-soft));
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--separator));
+}
+
+.scratchpad-button--filled.icon-button.button--outlined:hover:not(:disabled) {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface-hover));
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--separator));
+}
+
+.scratchpad-button--filled::after {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 5px;
+  height: 5px;
+  content: '';
+  background: var(--primary);
+  border: 1px solid color-mix(in srgb, rgb(var(--card-rgb)) 86%, var(--page-bg));
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
 .dashboard-grid {
   display: grid;
   min-height: 0;

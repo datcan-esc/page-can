@@ -2,8 +2,9 @@
   import { flip } from 'svelte/animate';
   import { onMount, tick } from 'svelte';
   import { slide } from 'svelte/transition';
-  import { normalizeTodoText } from '../../lib/todos';
-  import type { Todo } from '../../lib/types';
+  import { parseTodoDraft, resolveTodoTags, todoDraftText } from '../../lib/todos';
+  import type { Todo, TodoTag } from '../../lib/types';
+  import Badge from '../ui/Badge.svelte';
   import Button from '../ui/Button.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
@@ -14,7 +15,8 @@
   import './todos.css';
 
   export let todos: Todo[];
-  export let onChange: (todos: Todo[]) => void;
+  export let tags: TodoTag[] = [];
+  export let onChange: (todos: Todo[], tags?: TodoTag[]) => void;
   export let emptyText = 'Bu listede görev yok.';
   export let limitNote = '';
   export let onLimitClick: (() => void) | undefined = undefined;
@@ -25,22 +27,25 @@
   let editingInput: TodoTextField | undefined;
   let motionDuration = 170;
 
+  $: tagsById = new Map(tags.map((tag) => [tag.id, tag]));
+
   onMount(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) motionDuration = 0;
   });
 
   function toggle(todo: Todo) {
-    const pendingTitle = editingId === todo.id ? normalizeTodoText(editingTitle) : '';
+    const pending = editingId === todo.id ? parseTodoDraft(editingTitle) : null;
+    const resolved = pending?.title ? resolveTodoTags(pending.tagNames, tags) : null;
     onChange(todos.map((item) => {
       if (item.id !== todo.id) return item;
       const completed = !item.completed;
       return {
         ...item,
-        ...(pendingTitle ? { title: pendingTitle } : {}),
+        ...(pending?.title ? { title: pending.title, tagIds: resolved?.tagIds ?? item.tagIds } : {}),
         completed,
         completedAt: completed ? Date.now() : undefined,
       };
-    }));
+    }), resolved?.tags);
     if (editingId === todo.id) cancelEdit();
   }
 
@@ -51,16 +56,22 @@
   async function beginEdit(todo: Todo) {
     expandedId = '';
     editingId = todo.id;
-    editingTitle = todo.title;
+    editingTitle = todoDraftText(todo, tags);
     await tick();
     editingInput?.focusAtEnd();
   }
 
   function finishEdit(value = editingTitle) {
     if (!editingId) return;
-    const title = normalizeTodoText(value);
-    if (title) {
-      onChange(todos.map((item) => item.id === editingId ? { ...item, title } : item));
+    const draft = parseTodoDraft(value);
+    if (draft.title) {
+      const resolved = resolveTodoTags(draft.tagNames, tags);
+      onChange(
+        todos.map((item) => item.id === editingId
+          ? { ...item, title: draft.title, tagIds: resolved.tagIds }
+          : item),
+        resolved.tags,
+      );
     }
     editingId = '';
     editingTitle = '';
@@ -91,6 +102,7 @@
   {#each todos as todo, index (todo.id)}
     <div
       class="todo-motion"
+      class:todo-motion--editing={editingId === todo.id}
       animate:flip={{ duration: motionDuration }}
       out:slide={{ duration: motionDuration, axis: 'y' }}
     >
@@ -118,14 +130,20 @@
           <TodoTextField
             bind:this={editingInput}
             bind:value={editingTitle}
-            class="todo-edit-field"
+            class={`todo-edit-field${index < 2 ? ' todo-edit-field--below' : ''}`}
             ariaLabel="Yapılacak metnini düzenle"
             instruction="Enter ile kaydet. Shift+Enter ile yeni satır ekle. Escape ile vazgeç."
             onCommit={finishEdit}
             onCancel={cancelEdit}
             commitOnBlur
+            {tags}
+            enableTagSuggestions
           />
         {:else}
+          {@const todoTags = todo.tagIds.flatMap((tagId) => {
+            const tag = tagsById.get(tagId);
+            return tag ? [tag] : [];
+          })}
           <Button
             variant="ghost"
             class="todo-title"
@@ -133,7 +151,15 @@
             title={expandedId === todo.id ? 'Metni daralt' : 'Metnin tamamını göster'}
             onclick={() => toggleExpanded(todo)}
           >
-            {todo.title}
+            <span class="todo-title__content">
+              {#each (expandedId === todo.id ? todoTags : todoTags.slice(0, 2)) as tag (tag.id)}
+                <Badge color={tag.color}>#{tag.name}</Badge>
+              {/each}
+              {#if expandedId !== todo.id && todoTags.length > 2}
+                <Badge color="var(--muted)" variant="outline">+{todoTags.length - 2}</Badge>
+              {/if}
+              <span class="todo-title__text">{todo.title}</span>
+            </span>
           </Button>
         {/if}
 

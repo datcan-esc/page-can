@@ -1,0 +1,103 @@
+.scratchpad-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  padding: 48px;
+  place-items: center;
+  background: rgb(0 0 0 / 58%);
+  backdrop-filter: blur(10px);
+}
+
+.scratchpad-panel {
+  --text: var(--card-text);
+  --muted: var(--card-muted);
+  --surface-soft: var(--card-surface-soft);
+  --surface-hover: var(--card-surface-hover);
+  --surface-active: var(--card-surface-active);
+  --separator: var(--card-separator);
+  position: relative;
+  width: min(900px, 100%);
+  height: min(680px, calc(100dvh - 96px));
+  overflow: hidden;
+  color: var(--text);
+  background: color-mix(in srgb, rgb(var(--card-rgb)) 97%, var(--page-bg));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 3%),
+    0 32px 110px rgb(0 0 0 / 42%);
+}
+
+.scratchpad-panel textarea {
+  width: 100%;
+  height: 100%;
+  padding: 26px 96px 58px 28px;
+  color: var(--text);
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 430;
+  line-height: 1.65;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  resize: none;
+  scrollbar-color: var(--separator) transparent;
+  scrollbar-width: thin;
+}
+
+.scratchpad-panel textarea:focus-visible {
+  outline: 0;
+}
+
+.scratchpad-actions {
+  position: absolute;
+  z-index: 1;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: color-mix(in srgb, rgb(var(--card-rgb)) 88%, transparent);
+  border: 1px solid var(--separator);
+  border-radius: 11px;
+  box-shadow: 0 5px 20px rgb(0 0 0 / 12%);
+  backdrop-filter: blur(12px);
+}
+
+.scratchpad-actions .icon-button.copied {
+  color: var(--primary);
+}
+
+.scratchpad-status {
+  position: absolute;
+  right: 24px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.scratchpad-status.at-limit > :first-child {
+  color: var(--danger);
+}
+
+.scratchpad-status__divider {
+  width: 1px;
+  height: 13px;
+  background: var(--separator);
+}
+
+@media (max-height: 760px) {
+  .scratchpad-backdrop {
+    padding: 32px;
+  }
+
+  .scratchpad-panel {
+    height: calc(100dvh - 64px);
+  }
+}
