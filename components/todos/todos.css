@@ -147,39 +147,92 @@
   height: 28px;
   align-items: center;
   justify-content: center;
-  padding: 0 7px;
+  padding: 0 1px;
   color: var(--muted);
   font: inherit;
-  font-size: var(--type-body);
-  font-weight: var(--weight-title);
   background: transparent;
   border: 0;
   border-radius: 999px;
   cursor: pointer;
+  outline: 0;
 }
 
-.todo-filter-tab:first-child {
-  padding-inline: 10px;
-}
-
-.todo-filter-tab:hover,
-.todo-filter-tab:focus-visible {
-  color: var(--text);
-  background: var(--surface-hover);
-}
-
-.todo-filter-tab.active:first-child {
-  color: var(--text);
-  background: var(--surface-active);
-}
-
-.todo-filter-tab.active .badge {
-  background: color-mix(in srgb, var(--badge-color) 24%, transparent);
-  border-color: color-mix(in srgb, var(--badge-color) 48%, transparent);
-}
-
-.todo-filter-tab .badge {
+.todo-filter-tab .todo-filter-chip {
   pointer-events: none;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    filter var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.todo-filter-tab:not(.active) .todo-filter-chip {
+  color: color-mix(in srgb, var(--badge-color) 80%, var(--muted));
+  background: color-mix(in srgb, var(--badge-color) 18%, var(--surface-soft));
+  border-color: color-mix(in srgb, var(--badge-color) 18%, var(--separator));
+  opacity: 0.68;
+  filter: saturate(0.62);
+}
+
+.todo-filter-tab:hover:not(.active) .todo-filter-chip {
+  color: color-mix(in srgb, var(--badge-color) 48%, var(--text));
+  background: color-mix(in srgb, var(--badge-color) 13%, var(--surface-soft));
+  border-color: color-mix(in srgb, var(--badge-color) 23%, var(--separator));
+  opacity: 0.84;
+  filter: saturate(0.78);
+}
+
+.todo-filter-tab.active .todo-filter-chip,
+.todo-filter-tab:focus-visible .todo-filter-chip {
+  color: color-mix(in srgb, var(--badge-color) 50%, var(--text));
+  background: color-mix(in srgb, var(--badge-color) 40%, transparent);
+  border-color: color-mix(in srgb, var(--badge-color) 50%, transparent);
+  opacity: 1;
+  filter: none;
+}
+
+.todo-filter-tab__label {
+  max-width: 106px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-filter-tab__count {
+  margin-left: 5px;
+  padding-left: 5px;
+  color: inherit;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.todo-filter-shortcut {
+  display: inline-flex;
+  height: 25px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  padding: 0 5px 0 7px;
+  color: var(--muted);
+  font-size: 9px;
+  border-left: 1px solid var(--separator);
+  user-select: none;
+}
+
+.todo-filter-shortcut kbd {
+  min-width: 17px;
+  padding: 2px 4px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 9px;
+  line-height: 1;
+  text-align: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--separator);
+  border-radius: 5px;
+  box-shadow: inset 0 -1px var(--separator);
 }
 
 .todo-tag-manage.icon-button {
@@ -197,49 +250,65 @@
   position: absolute;
   z-index: 30;
   top: calc(100% + 6px);
-  right: 0;
   left: 0;
   display: grid;
-  max-height: 226px;
+  width: max-content;
+  max-width: min(100%, 240px);
+  max-height: 220px;
   gap: 2px;
+  padding: 4px;
   overflow-y: auto;
-  padding: 5px;
   color: var(--text);
   background: color-mix(in srgb, rgb(var(--card-rgb)) 97%, var(--page-bg));
   border: 1px solid var(--card-border);
-  border-radius: 12px;
-  box-shadow: 0 18px 45px rgb(0 0 0 / 34%);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 4%),
+    0 12px 30px rgb(0 0 0 / 32%);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
+  scrollbar-color: var(--separator) transparent;
+  scrollbar-width: thin;
 }
 
 .todo-tag-suggestion {
   display: flex;
   width: 100%;
-  min-height: 34px;
+  min-width: 0;
+  min-height: 28px;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 5px 7px;
-  color: var(--muted);
+  padding: 3px;
   font: inherit;
-  font-size: var(--type-body);
   background: transparent;
-  border: 0;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
   cursor: pointer;
+  outline: 0;
 }
 
-.todo-tag-suggestion.active,
-.todo-tag-suggestion:hover {
-  color: var(--text);
+.todo-tag-suggestion:hover:not(.active) {
   background: var(--surface-hover);
 }
 
-.todo-tag-suggestion > span:last-child {
+.todo-tag-suggestion.active {
+  background: var(--surface-active);
+  border-color: var(--separator);
+}
+
+.todo-tag-suggestion:focus-visible {
+  border-color: color-mix(in srgb, var(--primary) 62%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.todo-tag-suggestion > .badge {
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.todo-tag-suggestion.active > .badge {
+  background: color-mix(in srgb, var(--badge-color) 24%, transparent);
+  border-color: color-mix(in srgb, var(--badge-color) 50%, transparent);
 }
 
 .todo-row.list-item {

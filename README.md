@@ -126,6 +126,8 @@ Favori, odak zamanlayıcısı ve medya kısayolları yeni sekme sayfası açık 
 
 Tek harf, Space, F1–F12 veya Alt, Ctrl, Shift ve Meta içeren bir kombinasyon kullanılabilir. Aynı kısayol favori, odak zamanlayıcısı ve medya denetimi arasında tekrar kullanılamaz.
 
+Todo etiket filtreleri, bir metin alanı odakta değilken macOS'te `Option (⌥) + Sol/Sağ ok`, diğer sistemlerde `Alt + Sol/Sağ ok` ile değiştirilebilir. Filtre şeridi klavye odağındayken doğrudan `Sol/Sağ ok`, `Home` ve `End` tuşları da kullanılabilir.
+
 ## İzinler
 
 - `storage`: ayarları ve uygulama verisini saklamak için

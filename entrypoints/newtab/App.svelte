@@ -31,6 +31,7 @@
   } from '../../lib/pomodoro';
   import { normalizeScratchpadText } from '../../lib/scratchpad';
   import { setDailyFocusSeconds } from '../../lib/stats';
+  import { cycleTodoTagFilter } from '../../lib/todos';
   import {
     loadActiveTodos,
     loadCompletedTodos,
@@ -84,6 +85,8 @@
   export let initialSettings: AppSettings;
   export let initialError = '';
 
+  const TODO_FILTER_SHORTCUTS = ['Alt+ArrowLeft', 'Alt+ArrowRight'];
+
   type DialogName =
     | 'settings'
     | 'scratchpad'
@@ -101,6 +104,7 @@
   let completedTodos: Todo[] = [];
   let todoTags: TodoTag[] = [];
   let selectedTodoTagId = '';
+  let todoFilterDirection = 1;
   let completedTodosLoaded = false;
   let timer: PomodoroState = { ...DEFAULT_TIMER };
   let weeklyStats: DailyStat[] = [];
@@ -136,6 +140,7 @@
 
   $: if (selectedTodoTagId && !todoTags.some((tag) => tag.id === selectedTodoTagId)) {
     selectedTodoTagId = '';
+    todoFilterDirection = -1;
   }
 
   const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
@@ -159,6 +164,7 @@
   $: globalActionShortcuts = [
     settings.shortcuts.revealKey,
     settings.shortcuts.todoFocus,
+    ...TODO_FILTER_SHORTCUTS,
   ].filter(Boolean);
 
   function updateClock() {
@@ -173,6 +179,11 @@
 
   function reportError(error: unknown, fallback: string) {
     appError = errorMessage(error, fallback);
+  }
+
+  function selectTodoFilter(tagId: string, direction = 1) {
+    selectedTodoTagId = tagId && todoTags.some((tag) => tag.id === tagId) ? tagId : '';
+    todoFilterDirection = direction < 0 ? -1 : 1;
   }
 
   function updateScratchpadText(next: string) {
@@ -467,7 +478,8 @@
     activeDialog = null;
   }
 
-  async function openTodosDialog() {
+  async function openTodosDialog(tagId = selectedTodoTagId) {
+    selectTodoFilter(tagId, todoFilterDirection);
     activeDialog = 'todos';
     todosLoading = true;
     completedTodosLoaded = false;
@@ -581,12 +593,36 @@
     return !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey;
   }
 
+  function handleTodoFilterShortcut(event: KeyboardEvent, isTextEntry: boolean): boolean {
+    if (
+      !loaded
+      || isTextEntry
+      || event.isComposing
+      || !event.altKey
+      || event.ctrlKey
+      || event.metaKey
+      || event.shiftKey
+      || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
+      || (activeDialog && activeDialog !== 'todos')
+      || activeFolderId
+      || todoTags.length === 0
+    ) return false;
+
+    const direction = event.key === 'ArrowRight' ? 1 : -1;
+    const nextTagId = cycleTodoTagFilter(todoTags, selectedTodoTagId, direction);
+    event.preventDefault();
+    selectTodoFilter(nextTagId, direction);
+    return true;
+  }
+
   function handleGlobalKeydown(event: KeyboardEvent) {
+    if (event.defaultPrevented) return;
     const target = event.target as HTMLElement | null;
     const isTextEntry = Boolean(
       target?.closest('input, textarea, select, [role="textbox"]')
       || target?.isContentEditable,
     );
+    if (handleTodoFilterShortcut(event, isTextEntry)) return;
     if (!activeDialog && !isTextEntry && isRevealKeydown(event)) {
       event.preventDefault();
       shortcutHintKeyHeld = true;
@@ -823,6 +859,7 @@
           todos={activeTodos}
           tags={todoTags}
           selectedTagId={selectedTodoTagId}
+          filterDirection={todoFilterDirection}
           shortcut={settings.shortcuts.todoFocus}
           {showShortcutHints}
           focusRequest={todoFocusRequest}
@@ -830,8 +867,8 @@
             void updateActiveTodos(next, nextTags ?? todoTags)
               .catch((error) => reportError(error, 'Görevler kaydedilemedi.'));
           }}
-          onFilterChange={(tagId) => (selectedTodoTagId = tagId)}
-          onShowAll={() => void openTodosDialog()}
+          onFilterChange={selectTodoFilter}
+          onShowAll={(tagId) => void openTodosDialog(tagId)}
         />
       </div>
     </div>
@@ -878,6 +915,7 @@
     {hasWallpaper}
     wallpaperPreviewUrl={wallpaperUrl}
     {favoriteShortcuts}
+    reservedShortcuts={TODO_FILTER_SHORTCUTS}
     onClose={() => (activeDialog = null)}
     onSave={updateSettings}
     onWallpaper={updateWallpaper}
@@ -924,10 +962,11 @@
     todos={[...activeTodos, ...(completedTodosLoaded ? completedTodos : [])]}
     tags={todoTags}
     selectedTagId={selectedTodoTagId}
+    filterDirection={todoFilterDirection}
     loading={todosLoading}
     tagManagementReady={completedTodosLoaded}
     onClose={closeTodosDialog}
-    onFilterChange={(tagId) => (selectedTodoTagId = tagId)}
+    onFilterChange={selectTodoFilter}
     onChange={(next, nextTags) => {
       const tags = nextTags ?? todoTags;
       const persist = completedTodosLoaded

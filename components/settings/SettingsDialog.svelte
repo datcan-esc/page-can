@@ -22,6 +22,7 @@
   export let hasWallpaper: boolean;
   export let wallpaperPreviewUrl = '';
   export let favoriteShortcuts: string[] = [];
+  export let reservedShortcuts: string[] = [];
   export let onClose: () => void;
   export let onSave: (settings: AppSettings) => Promise<void>;
   export let onWallpaper: (file: File) => Promise<WallpaperAnalysis>;
@@ -166,6 +167,7 @@
       settings.pomodoro.shortcut,
       settings.media.shortcut,
       ...favoriteShortcuts,
+      ...reservedShortcuts,
     ].filter(Boolean);
 
     if (/^[1-9]$/.test(shortcutDraft.revealKey)) {

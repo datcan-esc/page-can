@@ -17,21 +17,22 @@
   export let shortcut = '';
   export let showShortcutHints = false;
   export let focusRequest = 0;
+  export let filterDirection = 1;
   export let onChange: (todos: Todo[], tags?: TodoTag[]) => void;
-  export let onFilterChange: (tagId: string) => void;
-  export let onShowAll: () => void;
+  export let onFilterChange: (tagId: string, direction: number) => void;
+  export let onShowAll: (tagId: string) => void;
 
-  let filterDirection = 1;
   let motionDuration = 170;
 
   onMount(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) motionDuration = 0;
   });
 
-  $: activeTodos = todos
+  $: allActiveTodos = todos
     .filter((todo) => !todo.completed)
-    .filter((todo) => !selectedTagId || todo.tagIds.includes(selectedTagId))
     .sort((left, right) => right.createdAt - left.createdAt);
+  $: activeTodos = allActiveTodos
+    .filter((todo) => !selectedTagId || todo.tagIds.includes(selectedTagId));
   $: visible = activeTodos.slice(0, TODO_CARD_LIMIT);
   $: selectedTag = tags.find((tag) => tag.id === selectedTagId);
 
@@ -56,8 +57,11 @@
   }
 
   function selectFilter(tagId: string, direction: number) {
-    filterDirection = direction;
-    onFilterChange(tagId);
+    onFilterChange(tagId, direction);
+  }
+
+  function showDetails() {
+    onShowAll(selectedTagId);
   }
 
   function updateVisible(updated: Todo[], nextTags = tags) {
@@ -71,7 +75,7 @@
 
 <Card title="Yapılacaklar" headingId="todo-heading" class="todo-card">
   <svelte:fragment slot="action">
-    <Button variant="ghost" size="sm" onclick={onShowAll}>Detaylar</Button>
+    <Button variant="ghost" size="sm" onclick={showDetails}>Detaylar</Button>
   </svelte:fragment>
 
   <TodoComposer
@@ -82,7 +86,13 @@
     {showShortcutHints}
     {focusRequest}
   />
-  <TodoFilters {tags} {selectedTagId} onSelect={selectFilter} />
+  <TodoFilters
+    {tags}
+    todos={allActiveTodos}
+    {selectedTagId}
+    onSelect={selectFilter}
+    showShortcutHint
+  />
   {#key selectedTagId}
     <div
       class:todo-filter-page--backward={filterDirection < 0}
@@ -97,7 +107,7 @@
         limitNote={activeTodos.length >= TODO_CARD_LIMIT
           ? `${TODO_CARD_LIMIT} açık görev gösteriliyor. Daha fazlası için`
           : ''}
-        onLimitClick={onShowAll}
+        onLimitClick={showDetails}
       />
     </div>
   {/key}

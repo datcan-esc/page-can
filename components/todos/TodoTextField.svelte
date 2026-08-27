@@ -54,8 +54,8 @@
   $: suggestionCount = matchingTags.length + (createName ? 1 : 0);
   $: suggestionsOpen = enableTagSuggestions
     && Boolean(trigger)
-    && !suggestionsSuppressed
-    && suggestionCount > 0;
+    && !suggestionsSuppressed;
+  $: suggestionsVisible = suggestionsOpen && suggestionCount > 0;
   $: if (selectedSuggestion >= suggestionCount) selectedSuggestion = Math.max(0, suggestionCount - 1);
 
   export function focus() {
@@ -117,7 +117,11 @@
   function handleKeydown(event: KeyboardEvent) {
     if (event.isComposing) return;
 
-    if (suggestionsOpen && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+    if (
+      suggestionsOpen
+      && suggestionCount > 0
+      && (event.key === 'ArrowDown' || event.key === 'ArrowUp')
+    ) {
       event.preventDefault();
       const offset = event.key === 'ArrowDown' ? 1 : -1;
       selectedSuggestion = (selectedSuggestion + offset + suggestionCount) % suggestionCount;
@@ -125,7 +129,11 @@
       return;
     }
 
-    if (suggestionsOpen && (event.key === 'Enter' || event.key === 'Tab')) {
+    if (
+      suggestionsOpen
+      && suggestionCount > 0
+      && (event.key === 'Enter' || event.key === 'Tab')
+    ) {
       event.preventDefault();
       void selectSuggestion();
       return;
@@ -173,13 +181,15 @@
   aria-label={ariaLabel}
   aria-description={instruction || undefined}
   title={instruction || undefined}
-  aria-expanded={suggestionsOpen}
-  aria-controls={suggestionsOpen ? suggestionsId : undefined}
-  aria-activedescendant={suggestionsOpen ? `${suggestionsId}-${selectedSuggestion}` : undefined}
+  aria-expanded={suggestionsVisible}
+  aria-controls={suggestionsVisible ? suggestionsId : undefined}
+  aria-activedescendant={suggestionsVisible
+    ? `${suggestionsId}-${selectedSuggestion}`
+    : undefined}
   aria-autocomplete={enableTagSuggestions ? 'list' : undefined}
   aria-haspopup={enableTagSuggestions ? 'listbox' : undefined}
   onkeydown={handleKeydown}
-  oninput={handleInput}
+  onInput={handleInput}
   onfocus={handleCaretChange}
   onclick={handleCaretChange}
   onblur={handleBlur}
@@ -187,7 +197,7 @@
   <svelte:fragment slot="trailing">
     {#if trailing}<slot name="trailing" />{/if}
   </svelte:fragment>
-  {#if suggestionsOpen}
+  {#if suggestionsVisible}
     <div
       id={suggestionsId}
       class="todo-tag-suggestions"
@@ -201,13 +211,16 @@
           class:active={selectedSuggestion === index}
           class="todo-tag-suggestion"
           role="option"
+          aria-label={`#${tag.name}`}
           aria-selected={selectedSuggestion === index}
           onmousedown={(event) => event.preventDefault()}
           onmouseenter={() => (selectedSuggestion = index)}
           onclick={() => void selectSuggestion(index)}
         >
-          <Badge color={tag.color}>#{tag.name}</Badge>
-          <span>Etiketi kullan</span>
+          <Badge
+            color={tag.color}
+            variant={selectedSuggestion === index ? 'outline' : 'soft'}
+          >#{tag.name}</Badge>
         </button>
       {/each}
       {#if createName}
@@ -217,13 +230,16 @@
           class:active={selectedSuggestion === matchingTags.length}
           class="todo-tag-suggestion"
           role="option"
+          aria-label={`#${createName} etiketini oluştur`}
           aria-selected={selectedSuggestion === matchingTags.length}
           onmousedown={(event) => event.preventDefault()}
           onmouseenter={() => (selectedSuggestion = matchingTags.length)}
           onclick={() => void selectSuggestion(matchingTags.length)}
         >
-          <Badge color={todoTagColor(createName)}>#{createName}</Badge>
-          <span>Yeni etiket oluştur</span>
+          <Badge
+            color={todoTagColor(createName)}
+            variant={selectedSuggestion === matchingTags.length ? 'outline' : 'soft'}
+          >#{createName}</Badge>
         </button>
       {/if}
     </div>

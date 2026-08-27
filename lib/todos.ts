@@ -85,6 +85,18 @@ export function todoTagColor(value: string): string {
   return TODO_TAG_COLORS[(hash >>> 0) % TODO_TAG_COLORS.length] ?? TODO_TAG_COLORS[0];
 }
 
+export function cycleTodoTagFilter(
+  tags: Array<Pick<TodoTag, 'id'>>,
+  selectedTagId: string,
+  direction: number,
+): string {
+  const options = ['', ...tags.map((tag) => tag.id)];
+  if (options.length <= 1) return '';
+  const currentIndex = Math.max(0, options.indexOf(selectedTagId));
+  const offset = direction < 0 ? -1 : 1;
+  return options[(currentIndex + offset + options.length) % options.length] ?? '';
+}
+
 export function parseTodoDraft(value: string): ParsedTodoDraft {
   let remaining = normalizeTodoDraftText(value);
   const tagNames: string[] = [];

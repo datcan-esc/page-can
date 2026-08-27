@@ -14,13 +14,13 @@
   export let selectedTagId = '';
   export let loading = false;
   export let tagManagementReady = false;
+  export let filterDirection = 1;
   export let onClose: () => void;
   export let onChange: (todos: Todo[], tags?: TodoTag[]) => void;
-  export let onFilterChange: (tagId: string) => void;
+  export let onFilterChange: (tagId: string, direction: number) => void;
 
   let query = '';
   let managingTags = false;
-  let filterDirection = 1;
   let motionDuration = 170;
 
   onMount(() => {
@@ -29,25 +29,32 @@
 
   $: normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
   $: tagsById = new Map(tags.map((tag) => [tag.id, tag]));
+  $: selectedTag = tagsById.get(selectedTagId);
   $: active = todos
     .filter((todo) => !todo.completed)
-    .filter(matchesTag)
-    .filter(matchesQuery)
+    .filter((todo) => matchesTag(todo, selectedTagId))
+    .filter((todo) => matchesQuery(todo, normalizedQuery, tagsById))
     .sort((left, right) => right.createdAt - left.createdAt);
   $: completed = todos
     .filter((todo) => todo.completed)
-    .filter(matchesTag)
-    .filter(matchesQuery)
+    .filter((todo) => matchesTag(todo, selectedTagId))
+    .filter((todo) => matchesQuery(todo, normalizedQuery, tagsById))
     .sort((left, right) => (right.completedAt ?? 0) - (left.completedAt ?? 0));
-  function matchesQuery(todo: Todo) {
-    if (!normalizedQuery) return true;
-    return todo.title.toLocaleLowerCase('tr-TR').includes(normalizedQuery)
+  $: filterLabel = selectedTag ? `#${selectedTag.name}` : 'Tümü';
+  $: dialogSubtitle = managingTags
+    ? `${tags.length} etiket`
+    : loading
+      ? `${filterLabel} · yükleniyor`
+      : `${filterLabel} · ${active.length + completed.length} görev`;
+  function matchesQuery(todo: Todo, value: string, tagMap: Map<string, TodoTag>) {
+    if (!value) return true;
+    return todo.title.toLocaleLowerCase('tr-TR').includes(value)
       || todo.tagIds.some((tagId) =>
-        tagsById.get(tagId)?.name.toLocaleLowerCase('tr-TR').includes(normalizedQuery));
+        tagMap.get(tagId)?.name.toLocaleLowerCase('tr-TR').includes(value));
   }
 
-  function matchesTag(todo: Todo) {
-    return !selectedTagId || todo.tagIds.includes(selectedTagId);
+  function matchesTag(todo: Todo, tagId: string) {
+    return !tagId || todo.tagIds.includes(tagId);
   }
 
   function updateSubset(original: Todo[], updated: Todo[], nextTags = tags) {
@@ -59,13 +66,12 @@
   }
 
   function selectFilter(tagId: string, direction: number) {
-    filterDirection = direction;
-    onFilterChange(tagId);
+    onFilterChange(tagId, direction);
   }
 
   function updateWorkspace(nextTodos: Todo[], nextTags: TodoTag[]) {
     if (selectedTagId && !nextTags.some((tag) => tag.id === selectedTagId)) {
-      onFilterChange('');
+      onFilterChange('', -1);
     }
     onChange(nextTodos, nextTags);
   }
@@ -73,7 +79,7 @@
 
 <Dialog
   title="Yapılacaklar"
-  subtitle={`${todos.length}`}
+  subtitle={dialogSubtitle}
   {onClose}
   wide
 >
@@ -91,11 +97,13 @@
 
     <TodoFilters
       {tags}
+      {todos}
       {selectedTagId}
       onSelect={selectFilter}
       onManage={() => (managingTags = !managingTags)}
       managing={managingTags}
       manageDisabled={loading || !tagManagementReady}
+      showShortcutHint
     />
 
     {#if managingTags}

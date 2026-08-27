@@ -288,6 +288,12 @@ test('storage sınırları ve todo migration', async (t) => {
       assert.deepEqual(resolved.tagIds[0], 'work');
       assert.equal(resolved.tags[1].name, 'Yeni');
       assert.equal(resolved.tags[1].createdAt, 2);
+
+      const filters = [{ id: 'work' }, { id: 'personal' }];
+      assert.equal(harness.todos.cycleTodoTagFilter(filters, '', 1), 'work');
+      assert.equal(harness.todos.cycleTodoTagFilter(filters, 'work', 1), 'personal');
+      assert.equal(harness.todos.cycleTodoTagFilter(filters, 'personal', 1), '');
+      assert.equal(harness.todos.cycleTodoTagFilter(filters, '', -1), 'personal');
     } finally {
       await harness.close();
     }
