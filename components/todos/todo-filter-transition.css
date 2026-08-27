@@ -1,0 +1,36 @@
+.todo-filter-page {
+  --todo-filter-duration: 170ms;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  animation: todo-filter-forward var(--todo-filter-duration) var(--ease-out);
+}
+
+.todo-filter-page--backward {
+  animation-name: todo-filter-backward;
+}
+
+.todo-filter-page > .todo-rows {
+  flex: 1;
+}
+
+@keyframes todo-filter-forward {
+  from {
+    opacity: 0.45;
+    transform: translateX(18px);
+  }
+}
+
+@keyframes todo-filter-backward {
+  from {
+    opacity: 0.45;
+    transform: translateX(-18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .todo-filter-page {
+    animation: none;
+  }
+}

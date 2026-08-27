@@ -1,0 +1,93 @@
+.todo-rows {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--separator) transparent;
+  scrollbar-width: thin;
+}
+
+.todo-row {
+  --list-item-gap: 9px;
+}
+
+.todo-row.expanded {
+  --list-item-min-height: 68px;
+  --list-item-leading-margin-top: 13px;
+  --list-item-actions-margin-top: 13px;
+}
+
+.todo-row.editing {
+  --list-item-min-height: 56px;
+  --list-item-align: start;
+  --list-item-leading-margin-top: 18px;
+  --list-item-actions-margin-top: 12px;
+  --list-item-content-overflow: visible;
+  height: auto;
+  max-height: none;
+}
+
+.todo-motion--editing {
+  position: relative;
+  z-index: 12;
+}
+
+.todo-title {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 0;
+  font-size: var(--type-title);
+  font-weight: 520;
+  line-height: 1.25;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.todo-title__content {
+  --badge-max-width: 88px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.todo-title__text {
+  min-width: 54px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-row.completed .todo-title__text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.todo-row.expanded .todo-title {
+  overflow: visible;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  line-height: 1.45;
+  text-overflow: clip;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.todo-row.expanded .todo-title__content {
+  --badge-max-width: 150px;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.todo-row.expanded .todo-title__text {
+  min-width: 100%;
+  flex-basis: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: pre-wrap;
+}

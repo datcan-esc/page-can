@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Todo, TodoTag } from '../../lib/types';
-  import Badge from '../ui/Badge.svelte';
+  import Chip from '../ui/Chip.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
-  import './todos.css';
+  import ShortcutHint from '../ui/ShortcutHint.svelte';
+  import './todo-filters.css';
 
   export let tags: TodoTag[];
   export let todos: Todo[] = [];
@@ -85,37 +86,29 @@
     title={`Etiketler arasında ${shortcutModifierName} + Sol/Sağ ok ile geçiş yapın`}
   >
     {#each options as option (option.id || 'all')}
-      <button
-        type="button"
-        class:active={selectedTagId === option.id}
+      <Chip
+        selected={selectedTagId === option.id}
+        color={option.color}
         class="todo-filter-tab"
         role="tab"
         aria-selected={selectedTagId === option.id}
         aria-label={`${option.name}, ${option.count} görev`}
         tabindex={selectedTagId === option.id ? 0 : -1}
-        onclick={(event) => choose(option.id, event.currentTarget)}
+        onclick={(event: MouseEvent) => choose(option.id, event.currentTarget as HTMLElement)}
         onkeydown={handleKeydown}
       >
-        <Badge
-          color={option.color}
-          variant={selectedTagId === option.id ? 'outline' : 'soft'}
-          class="todo-filter-chip"
-        >
-          <span class="todo-filter-tab__label">{option.id ? `#${option.name}` : option.name}</span>
-          {#if selectedTagId === option.id}
-            <span class="todo-filter-tab__count" aria-hidden="true">{option.count}</span>
-          {/if}
-        </Badge>
-      </button>
+        <span class="todo-filter-tab__label">{option.id ? `#${option.name}` : option.name}</span>
+        {#if selectedTagId === option.id}
+          <span class="todo-filter-tab__count" aria-hidden="true">{option.count}</span>
+        {/if}
+      </Chip>
     {/each}
   </div>
-  {#if showShortcutHint}
-    <span
-      class="todo-filter-shortcut"
-      aria-label={`Etiketler arasında ${shortcutModifierName} ve yön tuşlarıyla geçiş yapabilirsiniz`}
-      title={`Önceki veya sonraki etiket: ${shortcutModifierName} + Sol/Sağ ok`}
-    ><kbd>{shortcutModifierLabel}</kbd><span aria-hidden="true">↔</span></span>
-  {/if}
+  <ShortcutHint
+    shortcut={`${shortcutModifierLabel} ↔`}
+    visible={showShortcutHint}
+    class="todo-filter-shortcut"
+  />
   {#if onManage}
     <IconButton
       label={managing ? 'Görevlere dön' : 'Etiketleri yönet'}
@@ -123,7 +116,6 @@
         ? 'Etiket yönetimi tamamlanan görevler yüklendiğinde kullanılabilir'
         : managing ? 'Görevlere dön' : 'Etiketleri yönet'}
       variant="ghost"
-      class={managing ? 'todo-tag-manage active' : 'todo-tag-manage'}
       disabled={manageDisabled}
       aria-pressed={managing}
       onclick={onManage}

@@ -1,0 +1,43 @@
+.todo-filter-bar {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  margin: 11px 0 10px;
+}
+
+.todo-filter-tabs {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 3px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.todo-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.todo-filter-tab__label {
+  max-width: 106px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-filter-tab__count {
+  margin-left: 5px;
+  padding-left: 5px;
+  color: inherit;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  border-left: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.todo-filter-shortcut.shortcut-hint {
+  flex: 0 0 auto;
+}

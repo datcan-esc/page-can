@@ -20,10 +20,10 @@
   display: flex;
   width: 100%;
   min-width: 0;
-  height: 42px;
+  height: var(--input-control-height, 42px);
   align-items: center;
   gap: 8px;
-  padding: 0 10px 0 12px;
+  padding: var(--input-control-padding, 0 10px 0 12px);
   color: var(--muted);
   background: var(--surface-soft);
   border: 1px solid transparent;
@@ -42,6 +42,14 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
+}
+
+.input-control__trailing {
+  margin-top: var(--input-trailing-margin-top, 0);
+}
+
+.input-control__trailing:empty {
+  display: none;
 }
 
 .input-control__icon {
@@ -81,15 +89,19 @@
 }
 
 .input-control textarea {
-  min-height: 64px;
-  padding: 9px 0;
+  min-height: var(--input-textarea-min-height, 64px);
+  max-height: var(--input-textarea-max-height, none);
+  padding: var(--input-textarea-padding, 9px 0);
+  overflow-y: var(--input-textarea-overflow, auto);
   line-height: 1.4;
-  resize: vertical;
+  resize: var(--input-textarea-resize, vertical);
+  field-sizing: var(--input-textarea-field-sizing, fixed);
 }
 
 .input-field--multiline .input-control {
   height: auto;
-  min-height: 68px;
+  min-height: var(--input-multiline-min-height, 68px);
+  max-height: var(--input-multiline-max-height, none);
   align-items: flex-start;
 }
 

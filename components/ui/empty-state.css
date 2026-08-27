@@ -1,0 +1,12 @@
+.empty-state {
+  display: flex;
+  min-height: 80px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-body);
+  line-height: 1.4;
+  text-align: center;
+}

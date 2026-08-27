@@ -1,7 +1,10 @@
 .badge {
   --badge-color: var(--primary);
+  --badge-soft-background: color-mix(in srgb, var(--badge-color) 17%, transparent);
+  --badge-soft-border: color-mix(in srgb, var(--badge-color) 24%, transparent);
+  --badge-outline-border: color-mix(in srgb, var(--badge-color) 42%, transparent);
   display: inline-flex;
-  max-width: 100%;
+  max-width: var(--badge-max-width, 100%);
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
@@ -28,13 +31,13 @@
 }
 
 .badge--soft {
-  background: color-mix(in srgb, var(--badge-color) 17%, transparent);
-  border-color: color-mix(in srgb, var(--badge-color) 24%, transparent);
+  background: var(--badge-soft-background);
+  border-color: var(--badge-soft-border);
 }
 
 .badge--outline {
   background: transparent;
-  border-color: color-mix(in srgb, var(--badge-color) 42%, transparent);
+  border-color: var(--badge-outline-border);
 }
 
 .badge--solid {

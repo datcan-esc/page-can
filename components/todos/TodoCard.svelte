@@ -9,7 +9,8 @@
   import TodoComposer from './TodoComposer.svelte';
   import TodoFilters from './TodoFilters.svelte';
   import TodoRows from './TodoRows.svelte';
-  import './todos.css';
+  import './todo-card.css';
+  import './todo-filter-transition.css';
 
   export let todos: Todo[];
   export let tags: TodoTag[];
@@ -73,7 +74,7 @@
   }
 </script>
 
-<Card title="Yapılacaklar" headingId="todo-heading" class="todo-card">
+<Card title="Yapılacaklar" headingId="todo-heading" class="todo-card" bodyClass="todo-card__body">
   <svelte:fragment slot="action">
     <Button variant="ghost" size="sm" onclick={showDetails}>Detaylar</Button>
   </svelte:fragment>

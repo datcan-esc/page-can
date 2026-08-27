@@ -1,0 +1,91 @@
+.todo-tag-manager {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.todo-tag-manager > header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 12px;
+  padding: 0 5px;
+}
+
+.todo-tag-manager > header > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.todo-tag-manager > header strong {
+  color: var(--text);
+  font-size: var(--type-title);
+}
+
+.todo-tag-manager > header span,
+.todo-tag-manager > header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--type-body);
+  line-height: 1.35;
+}
+
+.todo-tag-manager__list {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.todo-tag-manager__row {
+  --list-item-min-height: 52px;
+  --list-item-padding: 5px;
+  --list-item-content-overflow: visible;
+}
+
+.todo-tag-manager__content {
+  --badge-max-width: 180px;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.todo-tag-manager__count {
+  color: var(--muted);
+  font-size: var(--type-body);
+}
+
+.todo-tag-manager__actions,
+.todo-tag-delete-confirm,
+.todo-tag-rename {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.todo-tag-rename {
+  --input-control-height: 36px;
+  min-width: 0;
+}
+
+.todo-tag-rename__input {
+  min-width: 120px;
+  flex: 1;
+}
+
+.todo-tag-delete-confirm > span {
+  margin-right: 4px;
+  color: var(--muted);
+  font-size: var(--type-body);
+}
+
+.todo-tag-manager__error {
+  grid-column: 2;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-body);
+}

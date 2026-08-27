@@ -2,12 +2,13 @@
   import { onMount } from 'svelte';
   import type { Todo, TodoTag } from '../../lib/types';
   import Dialog from '../ui/Dialog.svelte';
+  import EmptyState from '../ui/EmptyState.svelte';
   import Input from '../ui/Input.svelte';
   import TodoFilters from './TodoFilters.svelte';
   import TodoRows from './TodoRows.svelte';
   import TodoTagManager from './TodoTagManager.svelte';
-  import '../ui/form.css';
-  import './todos.css';
+  import './todo-filter-transition.css';
+  import './todos-dialog.css';
 
   export let todos: Todo[];
   export let tags: TodoTag[];
@@ -139,7 +140,7 @@
           <span class="todo-section__count">{completed.length}</span>
         </header>
         {#if loading}
-          <div class="card-empty todo-empty" role="status">Tamamlanan görevler yükleniyor…</div>
+          <EmptyState text="Tamamlanan görevler yükleniyor…" status />
         {:else}
           <TodoRows
             todos={completed}

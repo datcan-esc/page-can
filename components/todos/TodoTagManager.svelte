@@ -9,10 +9,13 @@
   import type { Todo, TodoTag } from '../../lib/types';
   import Badge from '../ui/Badge.svelte';
   import Button from '../ui/Button.svelte';
+  import EmptyState from '../ui/EmptyState.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
   import Input from '../ui/Input.svelte';
-  import './todos.css';
+  import List from '../ui/List.svelte';
+  import ListItem from '../ui/ListItem.svelte';
+  import './todo-tag-manager.css';
 
   export let tags: TodoTag[];
   export let todos: Todo[];
@@ -83,59 +86,71 @@
     <p>Etiketi silmek görevleri değil, yalnızca etiket bağlantısını kaldırır.</p>
   </header>
 
-  <div class="todo-tag-manager__list" role="list">
-    {#each tags as tag (tag.id)}
-      <div class="todo-tag-manager__row" role="listitem">
-        <Badge color={tag.color} size="md">#{tag.name}</Badge>
-        {#if editingId === tag.id}
-          <form class="todo-tag-rename" onsubmit={(event) => { event.preventDefault(); saveRename(tag); }}>
-            <Input
-              bind:this={renameInput}
-              bind:value={editingName}
-              maxLength={32}
-              aria-label={`${tag.name} etiketinin yeni adı`}
-              aria-invalid={Boolean(error)}
-              onkeydown={(event: KeyboardEvent) => {
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  cancelRename();
-                }
-              }}
-            />
-            <IconButton label="Yeniden adlandırmayı kaydet" variant="ghost" type="submit">
-              <Icon name="check" size={15} />
-            </IconButton>
-            <IconButton label="Vazgeç" variant="ghost" onclick={cancelRename}>
-              <Icon name="close" size={15} />
-            </IconButton>
-          </form>
-        {:else}
-          <span class="todo-tag-manager__count">{usageCount(tag.id)} görevde</span>
-          {#if deletingId === tag.id}
-            <div class="todo-tag-delete-confirm">
-              <span>Kaldırılsın mı?</span>
-              <Button variant="ghost" size="sm" onclick={() => (deletingId = '')}>Vazgeç</Button>
-              <Button variant="ghost" size="sm" class="todo-tag-delete" onclick={() => removeTag(tag.id)}>Sil</Button>
-            </div>
-          {:else}
-            <div class="todo-tag-manager__actions">
-              <IconButton label={`${tag.name} etiketini yeniden adlandır`} variant="ghost" onclick={() => void beginRename(tag)}>
-                <Icon name="edit" size={15} />
-              </IconButton>
-              <IconButton label={`${tag.name} etiketini sil`} variant="ghost" onclick={() => { editingId = ''; deletingId = tag.id; }}>
-                <Icon name="trash" size={15} />
-              </IconButton>
-            </div>
-          {/if}
-        {/if}
-      </div>
-      {#if editingId === tag.id && error}<p class="todo-tag-manager__error" role="alert">{error}</p>{/if}
-    {:else}
-      <div class="card-empty todo-empty">
-        <Icon name="list" size={20} />
-        <p>Henüz kalıcı bir etiket yok.</p>
-      </div>
-    {/each}
-  </div>
+  {#if tags.length}
+    <List class="todo-tag-manager__list">
+      {#each tags as tag, index (tag.id)}
+        <ListItem
+          divider={index < tags.length - 1}
+          expanded={editingId === tag.id}
+          actionsVisible={deletingId === tag.id}
+          class="todo-tag-manager__row"
+        >
+          <div class="todo-tag-manager__content">
+            <Badge color={tag.color} size="md">#{tag.name}</Badge>
+            {#if editingId === tag.id}
+              <form class="todo-tag-rename" onsubmit={(event) => { event.preventDefault(); saveRename(tag); }}>
+                <Input
+                  bind:this={renameInput}
+                  bind:value={editingName}
+                  class="todo-tag-rename__input"
+                  maxLength={32}
+                  aria-label={`${tag.name} etiketinin yeni adı`}
+                  aria-invalid={Boolean(error)}
+                  onkeydown={(event: KeyboardEvent) => {
+                    if (event.key === 'Escape') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      cancelRename();
+                    }
+                  }}
+                />
+                <IconButton label="Yeniden adlandırmayı kaydet" variant="ghost" tone="primary" type="submit">
+                  <Icon name="check" size={15} />
+                </IconButton>
+                <IconButton label="Vazgeç" variant="ghost" onclick={cancelRename}>
+                  <Icon name="close" size={15} />
+                </IconButton>
+              </form>
+              {#if error}<p class="todo-tag-manager__error" role="alert">{error}</p>{/if}
+            {:else}
+              <span class="todo-tag-manager__count">{usageCount(tag.id)} görevde</span>
+            {/if}
+          </div>
+
+          <svelte:fragment slot="actions">
+            {#if editingId !== tag.id}
+              {#if deletingId === tag.id}
+                <div class="todo-tag-delete-confirm">
+                  <span>Kaldırılsın mı?</span>
+                  <Button variant="ghost" size="sm" onclick={() => (deletingId = '')}>Vazgeç</Button>
+                  <Button variant="ghost" tone="danger" size="sm" onclick={() => removeTag(tag.id)}>Sil</Button>
+                </div>
+              {:else}
+                <div class="todo-tag-manager__actions">
+                  <IconButton label={`${tag.name} etiketini yeniden adlandır`} variant="ghost" onclick={() => void beginRename(tag)}>
+                    <Icon name="edit" size={15} />
+                  </IconButton>
+                  <IconButton label={`${tag.name} etiketini sil`} variant="ghost" tone="danger" onclick={() => { editingId = ''; deletingId = tag.id; }}>
+                    <Icon name="trash" size={15} />
+                  </IconButton>
+                </div>
+              {/if}
+            {/if}
+          </svelte:fragment>
+        </ListItem>
+      {/each}
+    </List>
+  {:else}
+    <EmptyState text="Henüz kalıcı bir etiket yok." />
+  {/if}
 </section>

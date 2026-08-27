@@ -12,9 +12,9 @@
   } from '../../lib/todos';
   import type { TodoTag } from '../../lib/types';
   import { createId } from '../../lib/utils';
-  import Badge from '../ui/Badge.svelte';
+  import Chip from '../ui/Chip.svelte';
   import Input from '../ui/Input.svelte';
-  import './todos.css';
+  import './todo-text-field.css';
 
   export let value = '';
   export let placeholder = '';
@@ -205,42 +205,32 @@
       aria-label="Etiket önerileri"
     >
       {#each matchingTags as tag, index (tag.id)}
-        <button
+        <Chip
           id={`${suggestionsId}-${index}`}
-          type="button"
-          class:active={selectedSuggestion === index}
+          selected={selectedSuggestion === index}
+          color={tag.color}
           class="todo-tag-suggestion"
           role="option"
           aria-label={`#${tag.name}`}
           aria-selected={selectedSuggestion === index}
-          onmousedown={(event) => event.preventDefault()}
+          onmousedown={(event: MouseEvent) => event.preventDefault()}
           onmouseenter={() => (selectedSuggestion = index)}
           onclick={() => void selectSuggestion(index)}
-        >
-          <Badge
-            color={tag.color}
-            variant={selectedSuggestion === index ? 'outline' : 'soft'}
-          >#{tag.name}</Badge>
-        </button>
+        >#{tag.name}</Chip>
       {/each}
       {#if createName}
-        <button
+        <Chip
           id={`${suggestionsId}-${matchingTags.length}`}
-          type="button"
-          class:active={selectedSuggestion === matchingTags.length}
+          selected={selectedSuggestion === matchingTags.length}
+          color={todoTagColor(createName)}
           class="todo-tag-suggestion"
           role="option"
           aria-label={`#${createName} etiketini oluştur`}
           aria-selected={selectedSuggestion === matchingTags.length}
-          onmousedown={(event) => event.preventDefault()}
+          onmousedown={(event: MouseEvent) => event.preventDefault()}
           onmouseenter={() => (selectedSuggestion = matchingTags.length)}
           onclick={() => void selectSuggestion(matchingTags.length)}
-        >
-          <Badge
-            color={todoTagColor(createName)}
-            variant={selectedSuggestion === matchingTags.length ? 'outline' : 'soft'}
-          >#{createName}</Badge>
-        </button>
+        >#{createName}</Chip>
       {/if}
     </div>
   {/if}

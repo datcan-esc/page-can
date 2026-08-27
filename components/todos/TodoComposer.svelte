@@ -5,7 +5,7 @@
   import { parseTodoDraft } from '../../lib/todos';
   import type { TodoTag } from '../../lib/types';
   import TodoTextField from './TodoTextField.svelte';
-  import './todos.css';
+  import './todo-composer.css';
 
   export let onAdd: (title: string, tagNames: string[]) => void;
   export let tags: TodoTag[] = [];
@@ -46,7 +46,7 @@
     trailing
   >
     <svelte:fragment slot="trailing">
-      <IconButton label="Görevi ekle" variant="ghost" type="submit" class="todo-submit" disabled={!canSubmit}>
+      <IconButton label="Görevi ekle" variant="ghost" tone="primary" type="submit" disabled={!canSubmit}>
         <Icon name="arrow-up" size={15} strokeWidth={2.2} />
       </IconButton>
     </svelte:fragment>

@@ -4,6 +4,7 @@
   export let expanded = false;
   export let muted = false;
   export let divider = false;
+  export let actionsVisible = false;
   let className = '';
   export { className as class };
 </script>
@@ -13,6 +14,7 @@
   class:muted
   class:has-divider={divider}
   class:has-leading={Boolean($$slots.leading)}
+  class:actions-visible={actionsVisible}
   class={`list-item ${className}`.trim()}
   role="listitem"
 >

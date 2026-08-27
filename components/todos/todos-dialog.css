@@ -1,0 +1,73 @@
+.todos-dialog-layout {
+  display: flex;
+  height: min(500px, calc(100dvh - 170px));
+  min-height: 0;
+  flex-direction: column;
+}
+
+.todos-dialog-layout > .todo-search {
+  flex: 0 0 auto;
+  margin-bottom: 2px;
+}
+
+.todos-dialog-layout > .todo-filter-bar {
+  margin-bottom: 16px;
+}
+
+.todo-filter-page--dialog {
+  width: 100%;
+}
+
+.todo-sections {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+}
+
+.todo-filter-page--dialog > .todo-sections {
+  flex: 1;
+}
+
+.todo-section {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.todo-section > header {
+  display: flex;
+  min-height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.todo-section > header strong {
+  color: var(--text);
+  font-size: var(--type-title);
+  font-weight: var(--weight-title);
+}
+
+.todo-section__divider {
+  width: 1px;
+  height: 16px;
+  flex: 0 0 1px;
+  background: var(--separator);
+}
+
+.todo-section > header .todo-section__count {
+  color: var(--muted);
+  font-size: var(--type-title);
+  font-weight: var(--weight-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-section .todo-rows {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}

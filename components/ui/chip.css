@@ -1,0 +1,36 @@
+.chip {
+  display: inline-flex;
+  min-width: max-content;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  outline: 0;
+}
+
+.chip .chip__badge {
+  max-width: var(--chip-max-width, 100%);
+  pointer-events: none;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.chip:hover:not(:disabled) .chip__badge,
+.chip:focus-visible .chip__badge,
+.chip--selected .chip__badge {
+  background: var(--badge-soft-background);
+  border-color: var(--badge-outline-border);
+}
+
+.chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}

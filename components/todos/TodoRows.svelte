@@ -6,13 +6,15 @@
   import type { Todo, TodoTag } from '../../lib/types';
   import Badge from '../ui/Badge.svelte';
   import Button from '../ui/Button.svelte';
+  import Checkbox from '../ui/Checkbox.svelte';
+  import EmptyState from '../ui/EmptyState.svelte';
   import Icon from '../ui/Icon.svelte';
   import IconButton from '../ui/IconButton.svelte';
   import List from '../ui/List.svelte';
   import ListItem from '../ui/ListItem.svelte';
   import ListLimitNote from '../ui/ListLimitNote.svelte';
   import TodoTextField from './TodoTextField.svelte';
-  import './todos.css';
+  import './todo-rows.css';
 
   export let todos: Todo[];
   export let tags: TodoTag[] = [];
@@ -113,17 +115,14 @@
         class={`todo-row${todo.completed ? ' completed' : ''}${editingId === todo.id ? ' editing' : ''}`}
       >
         <svelte:fragment slot="leading">
-          <Button
-            variant="ghost"
-            class="todo-check"
-            aria-label={todo.completed ? 'Yapılacaklara geri taşı' : 'Tamamlandı olarak işaretle'}
+          <Checkbox
+            checked={todo.completed}
+            label={todo.completed ? 'Yapılacaklara geri taşı' : 'Tamamlandı olarak işaretle'}
             onmousedown={(event: MouseEvent) => {
               if (editingId === todo.id) event.preventDefault();
             }}
-            onclick={() => toggle(todo)}
-          >
-            {#if todo.completed}<Icon name="check" size={13} strokeWidth={2.5} />{/if}
-          </Button>
+            onChange={() => toggle(todo)}
+          />
         </svelte:fragment>
 
         {#if editingId === todo.id}
@@ -145,7 +144,7 @@
             return tag ? [tag] : [];
           })}
           <Button
-            variant="ghost"
+            variant="plain"
             class="todo-title"
             aria-expanded={expandedId === todo.id}
             title={expandedId === todo.id ? 'Metni daralt' : 'Metnin tamamını göster'}
@@ -188,10 +187,7 @@
       </ListItem>
     </div>
   {:else}
-    <div class="card-empty todo-empty">
-      <Icon name="check" size={20} />
-      <p>{emptyText}</p>
-    </div>
+    <EmptyState text={emptyText} />
   {/each}
   {#if limitNote && onLimitClick}
     <ListLimitNote text={limitNote} onShowAll={onLimitClick} />

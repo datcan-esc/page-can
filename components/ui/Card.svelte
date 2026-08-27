@@ -5,6 +5,7 @@
   export let title = '';
   export let headingId = createId('card-heading');
   export let ariaLabel = '';
+  export let bodyClass = '';
   let className = '';
   export { className as class };
 </script>
@@ -23,7 +24,7 @@
     </header>
   {/if}
 
-  <div class="card__body"><slot /></div>
+  <div class={`card__body ${bodyClass}`.trim()}><slot /></div>
 
   {#if $$slots.footer}
     <footer class="card__footer"><slot name="footer" /></footer>

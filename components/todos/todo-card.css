@@ -1,0 +1,9 @@
+.todo-card__body {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.todo-card .todo-rows {
+  flex: 1;
+}

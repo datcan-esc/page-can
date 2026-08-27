@@ -1,6 +1,7 @@
 <script context="module" lang="ts">
-  export type ButtonVariant = 'default' | 'ghost' | 'outlined';
+  export type ButtonVariant = 'default' | 'ghost' | 'outlined' | 'plain';
   export type ButtonSize = 'sm' | 'md';
+  export type ButtonTone = 'neutral' | 'primary' | 'danger';
 </script>
 
 <script lang="ts">
@@ -8,6 +9,7 @@
 
   export let variant: ButtonVariant = 'default';
   export let size: ButtonSize = 'md';
+  export let tone: ButtonTone = 'neutral';
   export let type: 'button' | 'submit' | 'reset' = 'button';
   export let disabled = false;
   let className = '';
@@ -18,7 +20,7 @@
   {...$$restProps}
   {type}
   {disabled}
-  class={`button button--${variant} button--${size} ${className}`.trim()}
+  class={`button button--${variant} button--${size} button--tone-${tone} ${className}`.trim()}
 >
   <slot />
 </button>
