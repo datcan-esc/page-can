@@ -97,9 +97,12 @@
           <p>{subtitle}</p>
         {/if}
       </div>
-      <IconButton label="Kapat" variant="ghost" onclick={onClose}>
-        <Icon name="close" size={18} />
-      </IconButton>
+      <div class="dialog-header__actions">
+        {#if $$slots['header-actions']}<slot name="header-actions" />{/if}
+        <IconButton label="Kapat" variant="ghost" onclick={onClose}>
+          <Icon name="close" size={18} />
+        </IconButton>
+      </div>
     </header>
     <div class="dialog-content"><slot /></div>
     {#if confirmLabel || $$slots['footer-leading']}

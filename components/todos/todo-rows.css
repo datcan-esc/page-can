@@ -35,6 +35,11 @@
   z-index: 12;
 }
 
+.todo-motion--completing {
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .todo-title {
   display: block;
   width: 100%;

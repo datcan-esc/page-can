@@ -15,18 +15,11 @@
   padding: 0 5px;
 }
 
-.todo-tag-manager > header > div {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
 .todo-tag-manager > header strong {
   color: var(--text);
   font-size: var(--type-title);
 }
 
-.todo-tag-manager > header span,
 .todo-tag-manager > header p {
   margin: 0;
   color: var(--muted);

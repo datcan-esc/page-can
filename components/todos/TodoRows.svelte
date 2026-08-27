@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { flip } from 'svelte/animate';
-  import { onMount, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import { slide } from 'svelte/transition';
   import { parseTodoDraft, resolveTodoTags, todoDraftText } from '../../lib/todos';
   import type { Todo, TodoTag } from '../../lib/types';
@@ -23,6 +22,7 @@
   export let limitNote = '';
   export let onLimitClick: (() => void) | undefined = undefined;
   export let focusRequest = 0;
+  export let completionFeedbackDuration = 0;
 
   let editingId = '';
   let editingTitle = '';
@@ -32,6 +32,8 @@
   let activeRowId = '';
   let handledFocusRequest = 0;
   let motionDuration = 170;
+  let completingIds = new Set<string>();
+  const completionResetTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   $: tagsById = new Map(tags.map((tag) => [tag.id, tag]));
   $: if (!todos.some((todo) => todo.id === activeRowId)) {
@@ -46,7 +48,24 @@
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) motionDuration = 0;
   });
 
+  onDestroy(() => {
+    completionResetTimers.forEach((timer) => clearTimeout(timer));
+  });
+
+  function markCompleting(id: string) {
+    completingIds = new Set(completingIds).add(id);
+    const timer = setTimeout(() => {
+      const next = new Set(completingIds);
+      next.delete(id);
+      completingIds = next;
+      completionResetTimers.delete(id);
+    }, completionFeedbackDuration + motionDuration + 1500);
+    completionResetTimers.set(id, timer);
+  }
+
   function toggle(todo: Todo) {
+    if (completingIds.has(todo.id)) return;
+    if (!todo.completed && completionFeedbackDuration > 0) markCompleting(todo.id);
     const pending = editingId === todo.id ? parseTodoDraft(editingTitle) : null;
     const resolved = pending?.title ? resolveTodoTags(pending.tagNames, tags) : null;
     onChange(todos.map((item) => {
@@ -166,11 +185,16 @@
 
 <List bind:element={listElement} class="todo-rows">
   {#each todos as todo, index (todo.id)}
+    {@const completing = completingIds.has(todo.id)}
     <div
       class="todo-motion"
       class:todo-motion--editing={editingId === todo.id}
-      animate:flip={{ duration: motionDuration }}
-      out:slide={{ duration: motionDuration, axis: 'y' }}
+      class:todo-motion--completing={completing}
+      out:slide={{
+        delay: completing ? completionFeedbackDuration : 0,
+        duration: motionDuration,
+        axis: 'y',
+      }}
     >
       <ListItem
         divider={index < todos.length - 1}
@@ -181,14 +205,18 @@
         data-todo-row=""
         data-todo-id={todo.id}
         tabindex={activeRowId === todo.id ? 0 : -1}
+        aria-busy={completing}
         aria-keyshortcuts="ArrowUp ArrowDown Home End Enter"
         onfocus={() => (activeRowId = todo.id)}
         onkeydown={(event: KeyboardEvent) => void handleRowKeydown(event, todo)}
       >
         <svelte:fragment slot="leading">
           <Checkbox
-            checked={todo.completed}
-            label={todo.completed ? 'Yapılacaklara geri taşı' : 'Tamamlandı olarak işaretle'}
+            checked={todo.completed || completing}
+            animateCheck={completing}
+            label={completing
+              ? 'Tamamlandı'
+              : todo.completed ? 'Yapılacaklara geri taşı' : 'Tamamlandı olarak işaretle'}
             onmousedown={(event: MouseEvent) => {
               if (editingId === todo.id) event.preventDefault();
             }}

@@ -6,8 +6,9 @@
 }
 
 .todos-dialog-layout > .todo-search {
+  width: 100%;
   flex: 0 0 auto;
-  margin-bottom: 2px;
+  margin-bottom: 14px;
 }
 
 .todos-dialog-layout > .todo-filter-bar {

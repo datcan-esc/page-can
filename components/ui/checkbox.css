@@ -40,3 +40,26 @@
 .checkbox svg {
   display: block;
 }
+
+.checkbox.checked.animate-check svg {
+  transform-origin: center;
+  animation: checkbox-check-in 140ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes checkbox-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkbox.checked.animate-check svg {
+    animation: none;
+  }
+}

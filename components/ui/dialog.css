@@ -51,8 +51,16 @@
 .dialog-heading {
   display: flex;
   min-width: 0;
+  flex: 1;
   align-items: center;
   gap: 10px;
+}
+
+.dialog-header__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
 }
 
 .dialog-header h2 {

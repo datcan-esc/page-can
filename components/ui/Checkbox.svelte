@@ -4,6 +4,7 @@
 
   export let checked = false;
   export let disabled = false;
+  export let animateCheck = false;
   export let label: string;
   export let onChange: (checked: boolean) => void;
   let className = '';
@@ -14,6 +15,7 @@
   {...$$restProps}
   type="button"
   class:checked
+  class:animate-check={animateCheck}
   class={`checkbox ${className}`.trim()}
   role="checkbox"
   aria-checked={checked}

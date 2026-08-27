@@ -1,8 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Todo, TodoTag } from '../../lib/types';
+  import Button from '../ui/Button.svelte';
   import Dialog from '../ui/Dialog.svelte';
   import EmptyState from '../ui/EmptyState.svelte';
+  import Icon from '../ui/Icon.svelte';
   import Input from '../ui/Input.svelte';
   import TodoFilters from './TodoFilters.svelte';
   import TodoRows from './TodoRows.svelte';
@@ -22,8 +24,10 @@
   export let onChange: (todos: Todo[], tags?: TodoTag[]) => void;
   export let onFilterChange: (tagId: string, direction: number) => void;
 
+  type DialogView = 'tasks' | 'tags';
+
   let query = '';
-  let managingTags = false;
+  let dialogView: DialogView = 'tasks';
   let activeTodoRows: TodoRows | undefined;
   let completedTodoRows: TodoRows | undefined;
   let motionDuration = 170;
@@ -46,7 +50,8 @@
     .filter((todo) => matchesQuery(todo, normalizedQuery, tagsById))
     .sort((left, right) => (right.completedAt ?? 0) - (left.completedAt ?? 0));
   $: filterLabel = selectedTag ? `#${selectedTag.name}` : 'Tümü';
-  $: dialogSubtitle = managingTags
+  $: dialogTitle = dialogView === 'tags' ? 'Etiket yönetimi' : 'Yapılacaklar';
+  $: dialogSubtitle = dialogView === 'tags'
     ? `${tags.length} etiket`
     : loading
       ? `${filterLabel} · yükleniyor`
@@ -74,6 +79,11 @@
     onFilterChange(tagId, direction);
   }
 
+  function toggleDialogView() {
+    if (dialogView === 'tasks' && (loading || !tagManagementReady)) return;
+    dialogView = dialogView === 'tasks' ? 'tags' : 'tasks';
+  }
+
   function focusTodoRows(direction: number) {
     const target = direction < 0
       ? (completed.length ? completedTodoRows : activeTodoRows)
@@ -90,13 +100,28 @@
 </script>
 
 <Dialog
-  title="Yapılacaklar"
+  title={dialogTitle}
   subtitle={dialogSubtitle}
   {onClose}
   wide
 >
+  <svelte:fragment slot="header-actions">
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={dialogView === 'tasks' && (loading || !tagManagementReady)}
+      title={dialogView === 'tasks' && (loading || !tagManagementReady)
+        ? 'Etiket yönetimi görevler yüklendiğinde kullanılabilir'
+        : dialogView === 'tags' ? 'Görev listesine dön' : 'Etiketleri yeniden adlandır veya sil'}
+      onclick={toggleDialogView}
+    >
+      <Icon name={dialogView === 'tags' ? 'arrow-left' : 'tag'} size={15} />
+      {dialogView === 'tags' ? 'Görevlere dön' : 'Etiketleri yönet'}
+    </Button>
+  </svelte:fragment>
+
   <div class="todos-dialog-layout">
-    {#if !managingTags}
+    {#if dialogView === 'tasks'}
       <Input
         bind:value={query}
         type="search"
@@ -104,73 +129,71 @@
         class="todo-search"
         placeholder="Görevlerde veya etiketlerde ara"
         aria-label="Yapılacaklarda ara"
+        data-autofocus
       />
     {/if}
 
-    <TodoFilters
-      {tags}
-      {todos}
-      {selectedTagId}
-      onSelect={selectFilter}
-      onNavigateTodos={focusTodoRows}
-      onManage={() => (managingTags = !managingTags)}
-      managing={managingTags}
-      manageDisabled={loading || !tagManagementReady}
-      showShortcutHint={showShortcutHints}
-    />
-
-    {#if managingTags}
+    {#if dialogView === 'tags'}
       <TodoTagManager {tags} {todos} onChange={updateWorkspace} />
     {:else}
-    {#key selectedTagId}
-    <div
-      class:todo-filter-page--backward={filterDirection < 0}
-      class="todo-filter-page todo-filter-page--dialog"
-      style={`--todo-filter-duration: ${motionDuration}ms`}
-    >
-    <div class="todo-sections">
-      <section class="todo-section" aria-labelledby="active-todos-heading">
-        <header>
-          <strong id="active-todos-heading">Yapılacaklar</strong>
-          <span class="todo-section__divider" aria-hidden="true"></span>
-          <span class="todo-section__count">{active.length}</span>
-        </header>
-        <TodoRows
-          bind:this={activeTodoRows}
-          todos={active}
-          {tags}
-          focusRequest={active.length ? rowFocusRequest : 0}
-          onChange={(updated, nextTags) => updateSubset(active, updated, nextTags)}
-          emptyText={normalizedQuery
-            ? 'Aramana uygun açık görev yok.'
-            : selectedTagId ? 'Bu etikette açık görev yok.' : 'Açık görev yok.'}
-        />
-      </section>
+      <TodoFilters
+        {tags}
+        {todos}
+        {selectedTagId}
+        onSelect={selectFilter}
+        onNavigateTodos={focusTodoRows}
+        showShortcutHint={showShortcutHints}
+      />
 
-      <section class="todo-section" aria-labelledby="completed-todos-heading">
-        <header>
-          <strong id="completed-todos-heading">Tamamlananlar</strong>
-          <span class="todo-section__divider" aria-hidden="true"></span>
-          <span class="todo-section__count">{completed.length}</span>
-        </header>
-        {#if loading}
-          <EmptyState text="Tamamlanan görevler yükleniyor…" status />
-        {:else}
-          <TodoRows
-            bind:this={completedTodoRows}
-            todos={completed}
-            {tags}
-            focusRequest={!active.length && completed.length ? rowFocusRequest : 0}
-            onChange={(updated, nextTags) => updateSubset(completed, updated, nextTags)}
-            emptyText={normalizedQuery
-              ? 'Aramana uygun tamamlanan görev yok.'
-              : selectedTagId ? 'Bu etikette tamamlanan görev yok.' : 'Henüz tamamlanan görev yok.'}
-          />
-        {/if}
-      </section>
-    </div>
-    </div>
-    {/key}
+      {#key selectedTagId}
+        <div
+          class:todo-filter-page--backward={filterDirection < 0}
+          class="todo-filter-page todo-filter-page--dialog"
+          style={`--todo-filter-duration: ${motionDuration}ms`}
+        >
+          <div class="todo-sections">
+            <section class="todo-section" aria-labelledby="active-todos-heading">
+              <header>
+                <strong id="active-todos-heading">Yapılacaklar</strong>
+                <span class="todo-section__divider" aria-hidden="true"></span>
+                <span class="todo-section__count">{active.length}</span>
+              </header>
+              <TodoRows
+                bind:this={activeTodoRows}
+                todos={active}
+                {tags}
+                focusRequest={active.length ? rowFocusRequest : 0}
+                onChange={(updated, nextTags) => updateSubset(active, updated, nextTags)}
+                emptyText={normalizedQuery
+                  ? 'Aramana uygun açık görev yok.'
+                  : selectedTagId ? 'Bu etikette açık görev yok.' : 'Açık görev yok.'}
+              />
+            </section>
+
+            <section class="todo-section" aria-labelledby="completed-todos-heading">
+              <header>
+                <strong id="completed-todos-heading">Tamamlananlar</strong>
+                <span class="todo-section__divider" aria-hidden="true"></span>
+                <span class="todo-section__count">{completed.length}</span>
+              </header>
+              {#if loading}
+                <EmptyState text="Tamamlanan görevler yükleniyor…" status />
+              {:else}
+                <TodoRows
+                  bind:this={completedTodoRows}
+                  todos={completed}
+                  {tags}
+                  focusRequest={!active.length && completed.length ? rowFocusRequest : 0}
+                  onChange={(updated, nextTags) => updateSubset(completed, updated, nextTags)}
+                  emptyText={normalizedQuery
+                    ? 'Aramana uygun tamamlanan görev yok.'
+                    : selectedTagId ? 'Bu etikette tamamlanan görev yok.' : 'Henüz tamamlanan görev yok.'}
+                />
+              {/if}
+            </section>
+          </div>
+        </div>
+      {/key}
     {/if}
   </div>
 </Dialog>

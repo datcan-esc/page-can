@@ -79,11 +79,8 @@
 
 <section class="todo-tag-manager" aria-labelledby="todo-tag-manager-heading">
   <header>
-    <div>
-      <strong id="todo-tag-manager-heading">Etiketleri yönet</strong>
-      <span>{tags.length} etiket</span>
-    </div>
-    <p>Etiketi silmek görevleri değil, yalnızca etiket bağlantısını kaldırır.</p>
+    <strong id="todo-tag-manager-heading">Kayıtlı etiketler</strong>
+    <p>Yeniden adlandırabilir veya silebilirsin; görevlerin korunur.</p>
   </header>
 
   {#if tags.length}

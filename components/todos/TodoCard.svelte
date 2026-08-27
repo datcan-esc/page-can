@@ -112,6 +112,7 @@
         todos={visible}
         {tags}
         focusRequest={rowFocusRequest}
+        completionFeedbackDuration={240}
         onChange={updateVisible}
         emptyText={selectedTagId ? 'Bu etikette açık görev yok.' : 'Bugün için açık görev yok.'}
         limitNote={activeTodos.length >= TODO_CARD_LIMIT

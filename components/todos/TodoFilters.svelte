@@ -2,8 +2,6 @@
   import { onMount } from 'svelte';
   import type { Todo, TodoTag } from '../../lib/types';
   import Chip from '../ui/Chip.svelte';
-  import Icon from '../ui/Icon.svelte';
-  import IconButton from '../ui/IconButton.svelte';
   import ShortcutHint from '../ui/ShortcutHint.svelte';
   import './todo-filters.css';
 
@@ -12,9 +10,6 @@
   export let selectedTagId = '';
   export let onSelect: (tagId: string, direction: number) => void;
   export let onNavigateTodos: ((direction: number) => void) | undefined = undefined;
-  export let onManage: (() => void) | undefined = undefined;
-  export let managing = false;
-  export let manageDisabled = false;
   export let showShortcutHint = false;
 
   let shortcutModifierLabel = 'Alt';
@@ -89,7 +84,7 @@
   }
 </script>
 
-<div class:todo-filter-bar--with-action={Boolean(onManage)} class="todo-filter-bar">
+<div class="todo-filter-bar">
   <div
     class="todo-filter-tabs"
     role="tablist"
@@ -121,18 +116,4 @@
     visible={showShortcutHint}
     class="todo-filter-shortcut"
   />
-  {#if onManage}
-    <IconButton
-      label={managing ? 'Görevlere dön' : 'Etiketleri yönet'}
-      title={manageDisabled
-        ? 'Etiket yönetimi tamamlanan görevler yüklendiğinde kullanılabilir'
-        : managing ? 'Görevlere dön' : 'Etiketleri yönet'}
-      variant="ghost"
-      disabled={manageDisabled}
-      aria-pressed={managing}
-      onclick={onManage}
-    >
-      <Icon name={managing ? 'list' : 'sliders'} size={15} />
-    </IconButton>
-  {/if}
 </div>
