@@ -13,6 +13,16 @@
   padding: 0;
 }
 
+.icon-button--plain {
+  opacity: var(--icon-button-plain-opacity, 0.72);
+  transition: opacity var(--transition-fast);
+}
+
+.icon-button--plain:hover:not(:disabled),
+.icon-button--plain:focus-visible {
+  opacity: 1;
+}
+
 .icon-button svg {
   display: block;
 }

@@ -9,6 +9,11 @@
   --list-item-gap: 9px;
 }
 
+.todo-row:focus {
+  background: var(--surface-active);
+  outline: 0;
+}
+
 .todo-row.expanded {
   --list-item-min-height: 68px;
   --list-item-leading-margin-top: 13px;
@@ -55,6 +60,10 @@
   overflow: hidden;
 }
 
+.todo-title__tags {
+  display: contents;
+}
+
 .todo-title__text {
   min-width: 54px;
   flex: 1;
@@ -84,10 +93,52 @@
   overflow: visible;
 }
 
+.todo-row.expanded .todo-title__tags {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.todo-row.expanded:hover .todo-title__tags,
+.todo-row.expanded:focus-visible .todo-title__tags,
+.todo-row.expanded:has(.list-item__actions:focus-within) .todo-title__tags {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 80px),
+    transparent calc(100% - 62px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 80px),
+    transparent calc(100% - 62px),
+    transparent 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 .todo-row.expanded .todo-title__text {
+  display: block;
   min-width: 100%;
   flex-basis: 100%;
   overflow: visible;
   text-overflow: clip;
   white-space: pre-wrap;
+}
+
+.todo-row.expanded:hover .todo-title__content--untagged .todo-title__text::before,
+.todo-row.expanded:focus-visible .todo-title__content--untagged .todo-title__text::before,
+.todo-row.expanded:has(.list-item__actions:focus-within) .todo-title__content--untagged .todo-title__text::before {
+  width: 68px;
+  height: 30px;
+  float: right;
+  content: '';
+  pointer-events: none;
 }

@@ -5,16 +5,19 @@
   export let muted = false;
   export let divider = false;
   export let actionsVisible = false;
+  export let actionsOverlay = false;
   let className = '';
   export { className as class };
 </script>
 
 <div
+  {...$$restProps}
   class:expanded
   class:muted
   class:has-divider={divider}
   class:has-leading={Boolean($$slots.leading)}
   class:actions-visible={actionsVisible}
+  class:actions-overlay={actionsOverlay}
   class={`list-item ${className}`.trim()}
   role="listitem"
 >

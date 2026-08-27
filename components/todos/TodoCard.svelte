@@ -18,12 +18,14 @@
   export let shortcut = '';
   export let showShortcutHints = false;
   export let focusRequest = 0;
+  export let rowFocusRequest = 0;
   export let filterDirection = 1;
   export let onChange: (todos: Todo[], tags?: TodoTag[]) => void;
   export let onFilterChange: (tagId: string, direction: number) => void;
   export let onShowAll: (tagId: string) => void;
 
   let motionDuration = 170;
+  let todoRows: TodoRows | undefined;
 
   onMount(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) motionDuration = 0;
@@ -61,6 +63,10 @@
     onFilterChange(tagId, direction);
   }
 
+  function focusTodoRows(direction: number) {
+    void todoRows?.focusEdge(direction);
+  }
+
   function showDetails() {
     onShowAll(selectedTagId);
   }
@@ -92,7 +98,8 @@
     todos={allActiveTodos}
     {selectedTagId}
     onSelect={selectFilter}
-    showShortcutHint
+    onNavigateTodos={focusTodoRows}
+    showShortcutHint={showShortcutHints}
   />
   {#key selectedTagId}
     <div
@@ -101,8 +108,10 @@
       style={`--todo-filter-duration: ${motionDuration}ms`}
     >
       <TodoRows
+        bind:this={todoRows}
         todos={visible}
         {tags}
+        focusRequest={rowFocusRequest}
         onChange={updateVisible}
         emptyText={selectedTagId ? 'Bu etikette açık görev yok.' : 'Bugün için açık görev yok.'}
         limitNote={activeTodos.length >= TODO_CARD_LIMIT

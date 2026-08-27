@@ -11,6 +11,7 @@
   export let todos: Todo[] = [];
   export let selectedTagId = '';
   export let onSelect: (tagId: string, direction: number) => void;
+  export let onNavigateTodos: ((direction: number) => void) | undefined = undefined;
   export let onManage: (() => void) | undefined = undefined;
   export let managing = false;
   export let manageDisabled = false;
@@ -28,7 +29,7 @@
   });
 
   $: options = [
-    { id: '', name: 'Tümü', color: 'var(--primary)', count: todos.length },
+    { id: '', name: 'Tümü', color: 'var(--card-text)', count: todos.length },
     ...tags.map((tag) => ({
       ...tag,
       count: todos.filter((todo) => todo.tagIds.includes(tag.id)).length,
@@ -44,7 +45,18 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    if (event.ctrlKey || event.metaKey || event.shiftKey || options.length <= 1) return;
+    if (event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (
+      !event.altKey
+      && (event.key === 'ArrowDown' || event.key === 'ArrowUp')
+      && onNavigateTodos
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      onNavigateTodos(event.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
+    if (options.length <= 1) return;
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
     event.stopPropagation();
@@ -77,13 +89,13 @@
   }
 </script>
 
-<div class="todo-filter-bar">
+<div class:todo-filter-bar--with-action={Boolean(onManage)} class="todo-filter-bar">
   <div
     class="todo-filter-tabs"
     role="tablist"
     aria-label="Yapılacakları etikete göre filtrele"
-    aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"
-    title={`Etiketler arasında ${shortcutModifierName} + Sol/Sağ ok ile geçiş yapın`}
+    aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight ArrowUp ArrowDown"
+    title={`Etiketler arasında ${shortcutModifierName} + Sol/Sağ ok ile geçin; Yukarı/Aşağı oklarla görevlerde gezinin`}
   >
     {#each options as option (option.id || 'all')}
       <Chip
@@ -105,7 +117,7 @@
     {/each}
   </div>
   <ShortcutHint
-    shortcut={`${shortcutModifierLabel} ↔`}
+    shortcut={`${shortcutModifierLabel} ←→ · ↑↓`}
     visible={showShortcutHint}
     class="todo-filter-shortcut"
   />

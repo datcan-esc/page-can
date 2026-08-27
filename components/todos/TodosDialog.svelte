@@ -15,6 +15,8 @@
   export let selectedTagId = '';
   export let loading = false;
   export let tagManagementReady = false;
+  export let showShortcutHints = false;
+  export let rowFocusRequest = 0;
   export let filterDirection = 1;
   export let onClose: () => void;
   export let onChange: (todos: Todo[], tags?: TodoTag[]) => void;
@@ -22,6 +24,8 @@
 
   let query = '';
   let managingTags = false;
+  let activeTodoRows: TodoRows | undefined;
+  let completedTodoRows: TodoRows | undefined;
   let motionDuration = 170;
 
   onMount(() => {
@@ -70,6 +74,13 @@
     onFilterChange(tagId, direction);
   }
 
+  function focusTodoRows(direction: number) {
+    const target = direction < 0
+      ? (completed.length ? completedTodoRows : activeTodoRows)
+      : (active.length ? activeTodoRows : completedTodoRows);
+    void target?.focusEdge(direction);
+  }
+
   function updateWorkspace(nextTodos: Todo[], nextTags: TodoTag[]) {
     if (selectedTagId && !nextTags.some((tag) => tag.id === selectedTagId)) {
       onFilterChange('', -1);
@@ -101,10 +112,11 @@
       {todos}
       {selectedTagId}
       onSelect={selectFilter}
+      onNavigateTodos={focusTodoRows}
       onManage={() => (managingTags = !managingTags)}
       managing={managingTags}
       manageDisabled={loading || !tagManagementReady}
-      showShortcutHint
+      showShortcutHint={showShortcutHints}
     />
 
     {#if managingTags}
@@ -124,8 +136,10 @@
           <span class="todo-section__count">{active.length}</span>
         </header>
         <TodoRows
+          bind:this={activeTodoRows}
           todos={active}
           {tags}
+          focusRequest={active.length ? rowFocusRequest : 0}
           onChange={(updated, nextTags) => updateSubset(active, updated, nextTags)}
           emptyText={normalizedQuery
             ? 'Aramana uygun açık görev yok.'
@@ -143,8 +157,10 @@
           <EmptyState text="Tamamlanan görevler yükleniyor…" status />
         {:else}
           <TodoRows
+            bind:this={completedTodoRows}
             todos={completed}
             {tags}
+            focusRequest={!active.length && completed.length ? rowFocusRequest : 0}
             onChange={(updated, nextTags) => updateSubset(completed, updated, nextTags)}
             emptyText={normalizedQuery
               ? 'Aramana uygun tamamlanan görev yok.'

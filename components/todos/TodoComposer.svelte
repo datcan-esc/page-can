@@ -39,7 +39,7 @@
     bind:value
     {placeholder}
     ariaLabel="Yeni yapılacak"
-    instruction="Başta # ile etiket ekle. Enter ile ekle, Shift+Enter ile yeni satır aç."
+    instruction="Başta # ile etiket ekle. Enter ile ekle, Shift+Enter ile yeni satır aç, Escape ile alandan çık."
     onCommit={submit}
     {tags}
     enableTagSuggestions

@@ -131,6 +131,7 @@
   let hasWallpaper = false;
   let shortcutHintKeyHeld = false;
   let todoFocusRequest = 0;
+  let todoRowsFocusRequest = 0;
   let clockInterval: number | undefined;
   let scratchpadText = '';
   let savedScratchpadText = '';
@@ -612,6 +613,11 @@
     const nextTagId = cycleTodoTagFilter(todoTags, selectedTodoTagId, direction);
     event.preventDefault();
     selectTodoFilter(nextTagId, direction);
+    const focusRequest = todoRowsFocusRequest + 1;
+    todoRowsFocusRequest = focusRequest;
+    window.setTimeout(() => {
+      if (todoRowsFocusRequest === focusRequest) todoRowsFocusRequest = 0;
+    }, 0);
     return true;
   }
 
@@ -623,8 +629,12 @@
       || target?.isContentEditable,
     );
     if (handleTodoFilterShortcut(event, isTextEntry)) return;
-    if (!activeDialog && !isTextEntry && isRevealKeydown(event)) {
-      event.preventDefault();
+    const revealKeyIsModifier = ['Shift', 'Ctrl', 'Alt', 'Meta']
+      .includes(settings.shortcuts.revealKey);
+    const canRevealHints = (!activeDialog || activeDialog === 'todos')
+      && (!isTextEntry || revealKeyIsModifier);
+    if (canRevealHints && isRevealKeydown(event)) {
+      if (!isTextEntry) event.preventDefault();
       shortcutHintKeyHeld = true;
       return;
     }
@@ -863,6 +873,7 @@
           shortcut={settings.shortcuts.todoFocus}
           {showShortcutHints}
           focusRequest={todoFocusRequest}
+          rowFocusRequest={activeDialog ? 0 : todoRowsFocusRequest}
           onChange={(next, nextTags) => {
             void updateActiveTodos(next, nextTags ?? todoTags)
               .catch((error) => reportError(error, 'Görevler kaydedilemedi.'));
@@ -965,6 +976,8 @@
     filterDirection={todoFilterDirection}
     loading={todosLoading}
     tagManagementReady={completedTodosLoaded}
+    showShortcutHints={shortcutHintKeyHeld}
+    rowFocusRequest={todoRowsFocusRequest}
     onClose={closeTodosDialog}
     onFilterChange={selectTodoFilter}
     onChange={(next, nextTags) => {

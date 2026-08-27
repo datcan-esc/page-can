@@ -55,18 +55,82 @@
   gap: 2px;
   opacity: 0;
   pointer-events: none;
+  transition:
+    opacity var(--transition-fast),
+    translate var(--transition-fast);
 }
 
-.list-item:hover,
-.list-item:focus-within {
+.list-item:not(.actions-overlay):hover,
+.list-item:not(.actions-overlay):focus-within {
   background: var(--surface-soft);
 }
 
 .list-item:hover .list-item__actions,
-.list-item:focus-within .list-item__actions,
+.list-item:focus-visible .list-item__actions,
+.list-item:not(.actions-overlay):focus-within .list-item__actions,
+.list-item .list-item__actions:focus-within,
 .list-item.actions-visible .list-item__actions {
   opacity: 1;
   pointer-events: auto;
+}
+
+.list-item.actions-overlay {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.list-item.actions-overlay.has-leading {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.list-item.actions-overlay:not(.expanded):hover .list-item__content,
+.list-item.actions-overlay:not(.expanded):focus-visible .list-item__content,
+.list-item.actions-overlay:not(.expanded):has(.list-item__actions:focus-within) .list-item__content,
+.list-item.actions-overlay:not(.expanded).actions-visible .list-item__content {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 84px),
+    transparent calc(100% - 64px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 84px),
+    transparent calc(100% - 64px),
+    transparent 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.list-item.actions-overlay .list-item__actions {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 5px;
+  margin-top: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translateY(-50%);
+  translate: 5px 0;
+}
+
+.list-item.actions-overlay:hover .list-item__actions,
+.list-item.actions-overlay:focus-visible .list-item__actions,
+.list-item.actions-overlay .list-item__actions:focus-within,
+.list-item.actions-overlay.actions-visible .list-item__actions {
+  translate: 0;
+}
+
+.list-item.actions-overlay.expanded .list-item__actions {
+  --icon-button-plain-opacity: 1;
+  top: 8px;
+  color: var(--text);
+  transform: none;
 }
 
 .list-item.expanded {

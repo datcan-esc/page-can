@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-  export type IconButtonVariant = 'outlined' | 'ghost';
+  export type IconButtonVariant = 'outlined' | 'ghost' | 'plain';
 </script>
 
 <script lang="ts">

@@ -144,7 +144,7 @@
       return;
     }
 
-    if (trigger && event.key === 'Escape') {
+    if (suggestionsOpen && event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
       suggestionsSuppressed = true;
@@ -157,10 +157,14 @@
       return;
     }
 
-    if (event.key === 'Escape' && onCancel) {
+    if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
-      onCancel();
+      if (onCancel) {
+        onCancel();
+      } else {
+        (event.currentTarget as HTMLElement).blur();
+      }
     }
   }
 
