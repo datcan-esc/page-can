@@ -53,23 +53,23 @@
   gap: 8px;
 }
 
-.scratchpad-button {
+.notes-button {
   position: relative;
 }
 
-.scratchpad-button--filled.icon-button.button--outlined {
+.notes-button--filled.icon-button.button--outlined {
   color: var(--primary);
   background: color-mix(in srgb, var(--primary) 12%, var(--surface-soft));
   border-color: color-mix(in srgb, var(--primary) 30%, var(--separator));
 }
 
-.scratchpad-button--filled.icon-button.button--outlined:hover:not(:disabled) {
+.notes-button--filled.icon-button.button--outlined:hover:not(:disabled) {
   color: var(--primary);
   background: color-mix(in srgb, var(--primary) 18%, var(--surface-hover));
   border-color: color-mix(in srgb, var(--primary) 42%, var(--separator));
 }
 
-.scratchpad-button--filled::after {
+.notes-button--filled::after {
   position: absolute;
   top: 4px;
   right: 4px;

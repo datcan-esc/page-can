@@ -17,6 +17,7 @@
 - Haftanın en yüksek gününe göre saat çizgileri üreten, gerçek geçen süreyi kaydeden haftalık ve aylık odak istatistikleri
 - Aylık görünümden hatalı günlük odak toplamını düzenleme veya silme
 - Kalıcı ve renk kodlu çoklu etiketler, klavye kontrollü etiket önerileri ve filtrelerle birlikte yapılacaklar/tamamlananlar görünümleri
+- Kullanıcının seçtiği klasörde gerçek `.txt` dosyaları oluşturan; klasör tabanlı kategori, otomatik kayıt, dış düzenleme çakışması ve kurtarma taslağı destekli not defteri
 - Açık, koyu ve sistem teması
 - Vurgu, yüksek kontrastlı secondary metin, kart ve isteğe bağlı border rengi
 - Kart opaklığı ve blur ayarı
@@ -32,7 +33,8 @@
 - Manifest V3
 - Sade CSS
 - `chrome.storage.sync` ve `chrome.storage.local`
-- Wallpaper için IndexedDB
+- Wallpaper ve not klasörü handle'ı için IndexedDB
+- Yerel notlar için File System Access API
 - Arka plan timer takibi için `chrome.alarms`
 
 Harici font, state kütüphanesi, grafik kütüphanesi veya uzaktan çalışan kod kullanılmaz.
@@ -114,9 +116,14 @@ npm run zip
 | Tema, pomodoro ve medya kısayolu | `chrome.storage.sync` |
 | Favoriler, aktif/tamamlanan görevler, kalıcı todo etiketleri, timer ve istatistikler | `chrome.storage.local` |
 | Optimize edilmiş wallpaper | IndexedDB |
+| Not içerikleri ve kategorileri | Kullanıcının seçtiği yerel klasörde `.txt` dosyaları ve alt klasörler |
+| Not klasörü bağlantısı ve tek aktif kurtarma taslağı | IndexedDB |
+| Son açılan not ve klasör renkleri gibi küçük arayüz tercihleri | `chrome.storage.local` |
 | Tarayıcı yer imleri | Yalnızca `chrome.bookmarks` üzerinden okunur |
 
 Wallpaper cihazdan dışarı gönderilmez. Seçilen fotoğraf en fazla 3840×2160 sınırına küçültülür, WebP olarak sıkıştırılır ve yerel IndexedDB içinde saklanır.
+
+Not defteri yalnızca kullanıcının sistem klasör seçicisinde açıkça bağladığı klasöre erişir. Ana klasördeki `.txt` dosyaları “Kategorisiz”, doğrudan alt klasörler ise kategori olarak görünür. Not gövdeleri tarayıcı storage'ına taşınmaz; yalnızca beklenmedik kapanışta son değişikliği korumak için tek aktif kurtarma taslağı geçici olarak IndexedDB'de tutulur.
 
 Yeni sekme açılışında yalnızca son beş yer imi, aktif görevler ve haftalık istatistik görünümü hazırlanır. Tüm yer imleri, tamamlanan görevler ve aylık istatistikler ilgili detay ekranı açıldığında yüklenir. Eski tek-listeli todo verisi ilk açılışta aktif ve tamamlanan listelere otomatik taşınır.
 
@@ -128,6 +135,8 @@ Tek harf, Space, F1–F12 veya Alt, Ctrl, Shift ve Meta içeren bir kombinasyon 
 
 Todo etiket filtreleri, bir metin alanı odakta değilken macOS'te `Option (⌥) + Sol/Sağ ok`, diğer sistemlerde `Alt + Sol/Sağ ok` ile değiştirilebilir. Filtre şeridi klavye odağındayken doğrudan `Sol/Sağ ok`, `Home` ve `End` tuşları da kullanılabilir.
 
+Not defterinde `Ctrl/Cmd + N` yeni not oluşturur, `Ctrl/Cmd + S` bekleyen değişikliği hemen kaydeder. Not seçimi değiştiğinde ve pencere kapatıldığında da bekleyen kayıt güvenli biçimde tamamlanır.
+
 ## İzinler
 
 - `storage`: ayarları ve uygulama verisini saklamak için
@@ -137,5 +146,7 @@ Todo etiket filtreleri, bir metin alanı odakta değilken macOS'te `Option (⌥)
 - `idle`: yalnızca cihazın aktif, hareketsiz veya kilitli durumunu görüp açık unutulan sayacı duraklatmak için
 - `favicon`: favori ve yer imi ikonlarını yerel tarayıcı favicon servisiyle göstermek için
 - `scripting`: YouTube medya içerik bağlantısı kaybolduğunda yalnızca izinli YouTube sekmesine yeniden bağlanmak için
+
+Not klasörü için geniş bir manifest izni istenmez. Okuma/yazma yetkisi File System Access API üzerinden yalnızca kullanıcı klasörü seçtiğinde verilir ve gerektiğinde arayüzden yeniden onaylanır.
 
 Medya denetimi içerik betiği yalnızca `www.youtube.com` ve `music.youtube.com` sayfalarında çalışır. Uzantı diğer web sitelerine erişim istemez.

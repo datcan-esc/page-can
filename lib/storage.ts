@@ -541,6 +541,10 @@ export async function saveScratchpadText(text: string): Promise<void> {
   });
 }
 
+export async function clearScratchpadText(): Promise<void> {
+  await browser.storage.local.remove(LOCAL_SCRATCHPAD_KEY);
+}
+
 export const storageKeys = {
   settings: SYNC_SETTINGS_KEY,
   favorites: LOCAL_FAVORITES_KEY,

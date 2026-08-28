@@ -11,7 +11,7 @@
   import FocusSettingsDialog from '../../components/focus/FocusSettingsDialog.svelte';
   import MediaPlayer from '../../components/media/MediaPlayer.svelte';
   import MediaSettingsDialog from '../../components/media/MediaSettingsDialog.svelte';
-  import ScratchpadDialog from '../../components/scratchpad/ScratchpadDialog.svelte';
+  import NotesDialog from '../../components/notes/NotesDialog.svelte';
   import SettingsDialog from '../../components/settings/SettingsDialog.svelte';
   import ClockCard from '../../components/shell/ClockCard.svelte';
   import StatsCard from '../../components/stats/StatsCard.svelte';
@@ -29,14 +29,17 @@
     requestTimerReconciliation,
     toggleTimer,
   } from '../../lib/pomodoro';
-  import { normalizeScratchpadText } from '../../lib/scratchpad';
+  import {
+    NOTES_UI_STATE_KEY,
+    loadNotesUiState,
+    normalizeNotesUiState,
+  } from '../../lib/note-preferences';
   import { setDailyFocusSeconds } from '../../lib/stats';
   import { cycleTodoTagFilter } from '../../lib/todos';
   import {
     loadActiveTodos,
     loadCompletedTodos,
     loadFavorites,
-    loadScratchpadText,
     loadSettings,
     loadStats,
     loadStatsRange,
@@ -46,7 +49,6 @@
     normalizeSettings,
     saveActiveTodos,
     saveFavorites,
-    saveScratchpadText,
     saveSettings,
     saveTimer,
     saveTodoBuckets,
@@ -89,7 +91,7 @@
 
   type DialogName =
     | 'settings'
-    | 'scratchpad'
+    | 'notes'
     | 'favorite'
     | 'folder-app'
     | 'bookmarks'
@@ -119,7 +121,6 @@
   let todosLoadVersion = 0;
   let statsLoadVersion = 0;
   let todoOperationQueue: Promise<void> = Promise.resolve();
-  let scratchpadSaveQueue: Promise<void> = Promise.resolve();
   let loaded = false;
   let appError = initialError;
   let activeDialog: DialogName | null = null;
@@ -133,11 +134,7 @@
   let todoFocusRequest = 0;
   let todoRowsFocusRequest = 0;
   let clockInterval: number | undefined;
-  let scratchpadText = '';
-  let savedScratchpadText = '';
-  let scratchpadSaveState: 'saving' | 'saved' | 'error' = 'saved';
-  let scratchpadSaveTimer: number | undefined;
-  let scratchpadPendingSaves = 0;
+  let hasNotes = false;
 
   $: if (selectedTodoTagId && !todoTags.some((tag) => tag.id === selectedTodoTagId)) {
     selectedTodoTagId = '';
@@ -161,7 +158,6 @@
   $: favoriteShortcuts = favorites.flatMap((favorite) =>
     favorite.shortcut ? [favorite.shortcut] : []);
   $: showShortcutHints = shortcutHintKeyHeld && !activeDialog;
-  $: hasScratchpadContent = Boolean(scratchpadText.trim());
   $: globalActionShortcuts = [
     settings.shortcuts.revealKey,
     settings.shortcuts.todoFocus,
@@ -185,64 +181,6 @@
   function selectTodoFilter(tagId: string, direction = 1) {
     selectedTodoTagId = tagId && todoTags.some((tag) => tag.id === tagId) ? tagId : '';
     todoFilterDirection = direction < 0 ? -1 : 1;
-  }
-
-  function updateScratchpadText(next: string) {
-    scratchpadText = normalizeScratchpadText(next);
-    if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
-    scratchpadSaveTimer = undefined;
-
-    if (scratchpadText === savedScratchpadText && scratchpadPendingSaves === 0) {
-      scratchpadSaveState = 'saved';
-      return;
-    }
-
-    scratchpadSaveState = 'saving';
-    scratchpadSaveTimer = window.setTimeout(() => {
-      scratchpadSaveTimer = undefined;
-      void persistScratchpadText();
-    }, 400);
-  }
-
-  async function persistScratchpadText() {
-    if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
-    scratchpadSaveTimer = undefined;
-    const snapshot = scratchpadText;
-
-    if (snapshot === savedScratchpadText && scratchpadPendingSaves === 0) {
-      scratchpadSaveState = 'saved';
-      return;
-    }
-
-    scratchpadPendingSaves += 1;
-    const operation = scratchpadSaveQueue.then(() => saveScratchpadText(snapshot));
-    scratchpadSaveQueue = operation.catch(() => undefined);
-
-    try {
-      await operation;
-      savedScratchpadText = snapshot;
-    } catch (error) {
-      reportError(error, 'Metin alanı kaydedilemedi.');
-      if (scratchpadText === snapshot) scratchpadSaveState = 'error';
-      return;
-    } finally {
-      scratchpadPendingSaves -= 1;
-    }
-
-    if (scratchpadText === savedScratchpadText && scratchpadPendingSaves === 0) {
-      scratchpadSaveState = 'saved';
-    } else {
-      scratchpadSaveState = 'saving';
-    }
-  }
-
-  function closeScratchpadDialog() {
-    activeDialog = null;
-    void persistScratchpadText();
-  }
-
-  function handlePageHide() {
-    void persistScratchpadText();
   }
 
   async function refreshRecentBookmarks() {
@@ -682,19 +620,8 @@
         if (monthlyStatsLoaded) monthlyStats = statsInRange(value, localMonthRange());
       }));
     }
-    const scratchpadChange = changes[storageKeys.scratchpad];
-    if (scratchpadChange) {
-      const incoming = normalizeScratchpadText(scratchpadChange.newValue);
-      if (
-        scratchpadPendingSaves === 0
-        && (scratchpadText === savedScratchpadText || incoming === scratchpadText)
-      ) {
-        if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
-        scratchpadSaveTimer = undefined;
-        scratchpadText = incoming;
-        savedScratchpadText = incoming;
-        scratchpadSaveState = 'saved';
-      }
+    if (changes[NOTES_UI_STATE_KEY]) {
+      hasNotes = normalizeNotesUiState(changes[NOTES_UI_STATE_KEY].newValue).hasNotes;
     }
     await Promise.all(tasks);
   }
@@ -742,7 +669,7 @@
         loadTimer(),
         loadStatsRange(localWeekRange()),
         loadRecentBookmarks(),
-        loadScratchpadText(),
+        loadNotesUiState(),
         refreshWallpaper(),
       ]);
 
@@ -752,10 +679,7 @@
       applyInitialResult(results[3], (value) => { timer = value; });
       applyInitialResult(results[4], (value) => { weeklyStats = value; });
       applyInitialResult(results[5], (value) => { recentBookmarks = value; });
-      applyInitialResult(results[6], (value) => {
-        scratchpadText = value;
-        savedScratchpadText = value;
-      });
+      applyInitialResult(results[6], (value) => { hasNotes = value.hasNotes; });
       markInitialLoadErrors(results);
       loaded = true;
 
@@ -773,7 +697,6 @@
     window.addEventListener('keydown', handleGlobalKeydown);
     window.addEventListener('keyup', handleGlobalKeyup);
     window.addEventListener('blur', hideShortcutHints);
-    window.addEventListener('pagehide', handlePageHide);
     browser.storage.onChanged.addListener(handleStorageChanges);
     browser.bookmarks.onCreated.addListener(handleBookmarksChanged);
     browser.bookmarks.onRemoved.addListener(handleBookmarksChanged);
@@ -785,15 +708,12 @@
     window.removeEventListener('keydown', handleGlobalKeydown);
     window.removeEventListener('keyup', handleGlobalKeyup);
     window.removeEventListener('blur', hideShortcutHints);
-    window.removeEventListener('pagehide', handlePageHide);
     browser.storage.onChanged.removeListener(handleStorageChanges);
     browser.bookmarks.onCreated.removeListener(handleBookmarksChanged);
     browser.bookmarks.onRemoved.removeListener(handleBookmarksChanged);
     browser.bookmarks.onChanged.removeListener(handleBookmarksChanged);
     browser.bookmarks.onMoved.removeListener(handleBookmarksChanged);
     if (clockInterval) window.clearInterval(clockInterval);
-    if (scratchpadSaveTimer) window.clearTimeout(scratchpadSaveTimer);
-    void persistScratchpadText();
     if (wallpaperUrl) URL.revokeObjectURL(wallpaperUrl);
   });
 </script>
@@ -816,10 +736,10 @@
       <ClockCard time={timeLabel} date={dateLabel} />
       <div class="topbar-actions">
         <IconButton
-          label="Metin alanını aç"
-          title="Metin alanı"
-          class={`settings-button scratchpad-button ${hasScratchpadContent ? 'scratchpad-button--filled' : ''}`}
-          onclick={() => (activeDialog = 'scratchpad')}
+          label="Not defterini aç"
+          title="Not defteri"
+          class={`settings-button notes-button ${hasNotes ? 'notes-button--filled' : ''}`}
+          onclick={() => (activeDialog = 'notes')}
         >
           <Icon name="text" size={17} />
         </IconButton>
@@ -935,13 +855,10 @@
   />
 {/if}
 
-{#if activeDialog === 'scratchpad'}
-  <ScratchpadDialog
-    text={scratchpadText}
-    saveState={scratchpadSaveState}
-    onChange={updateScratchpadText}
-    onClose={closeScratchpadDialog}
-    onCopyError={(error) => reportError(error, 'Metin panoya kopyalanamadı.')}
+{#if activeDialog === 'notes'}
+  <NotesDialog
+    onClose={() => (activeDialog = null)}
+    onPresenceChange={(value) => (hasNotes = value)}
   />
 {/if}
 

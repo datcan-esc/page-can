@@ -29,9 +29,11 @@ async function createStorageHarness(initialState = {}) {
   const todos = await server.ssrLoadModule('/lib/todos.ts');
   const utils = await server.ssrLoadModule('/lib/utils.ts');
   const bookmarks = await server.ssrLoadModule('/lib/bookmarks.ts');
+  const notePreferences = await server.ssrLoadModule('/lib/note-preferences.ts');
   return {
     state,
     bookmarks,
+    notePreferences,
     scratchpad,
     storage,
     todos,
@@ -359,6 +361,47 @@ test('storage sınırları ve todo migration', async (t) => {
       assert.equal(stored.includes('\r'), false);
       assert.equal(harness.state.local.scratchpadText, stored);
       assert.equal(harness.storage.storageKeys.scratchpad, 'scratchpadText');
+
+      await harness.storage.clearScratchpadText();
+      assert.equal(await harness.storage.loadScratchpadText(), '');
+      assert.equal('scratchpadText' in harness.state.local, false);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  await t.test('not defterinin yalnızca küçük arayüz durumunu tarayıcıda saklar', async () => {
+    const harness = await createStorageHarness({
+      local: {
+        notesUiState: {
+          hasNotes: true,
+          lastNote: { category: 'Promptlar', fileName: 'Kod.txt' },
+          lastCategory: 'Promptlar',
+          migrationVersion: 1,
+          folderColors: {
+            Promptlar: 'purple',
+            Arşiv: 'invalid',
+            constructor: 'red',
+          },
+          unexpected: 'ignored',
+        },
+      },
+    });
+    try {
+      assert.deepEqual(await harness.notePreferences.loadNotesUiState(), {
+        hasNotes: true,
+        lastNote: { category: 'Promptlar', fileName: 'Kod.txt' },
+        lastCategory: 'Promptlar',
+        migrationVersion: 1,
+        folderColors: { Promptlar: 'purple' },
+      });
+      await harness.notePreferences.updateNotesUiState({ hasNotes: false, lastCategory: null });
+      assert.equal(harness.state.local.notesUiState.hasNotes, false);
+      assert.equal(harness.state.local.notesUiState.lastCategory, null);
+      assert.deepEqual(
+        harness.state.local.notesUiState.lastNote,
+        { category: 'Promptlar', fileName: 'Kod.txt' },
+      );
     } finally {
       await harness.close();
     }
